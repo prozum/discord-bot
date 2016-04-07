@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
   <appSettings>
-      <add key="Mail" value="bot@prozum.dk"/>
+      <add key="EMail" value="bot@prozum.dk"/>
       <add key="Password" value="password"/>
       <add key="Guild" value="/r/jimmicirclejerk"/>
       <add key="Channel" value="general"/>
