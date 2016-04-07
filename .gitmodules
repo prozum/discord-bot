@@ -1,0 +1,3 @@
+[submodule "ae-sharp"]
+	path = ae-sharp
+	url = git@github.com:prozum/ae-sharp.git
