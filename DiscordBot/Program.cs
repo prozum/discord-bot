@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Configuration;
 using RestSharp;
 using Newtonsoft.Json;
 using System.Net;
@@ -26,15 +27,12 @@ namespace Discord
             bot.AddModule(new CasNetModule());
             helloworld.Commands.Add("!helloworld", (str, bt) => { bt.Client.SendMessage(bt.Channel, "Hello World!", true); });
 
-            Console.WriteLine("Email:");
-            var email = Console.ReadLine();
-
-            Console.WriteLine("Password:");
-            var password = Console.ReadLine();
+            var email = ConfigurationManager.AppSettings.Get("EMail");
+            var password = ConfigurationManager.AppSettings.Get("Password");
 
             bot.Client.Login(email, password);
+			if (bot.TryJoinChannelInGuild(ConfigurationManager.AppSettings.Get("Guild"), ConfigurationManager.AppSettings.Get("Channel")))
             
-            if (bot.TryJoinChannelInGuild(@"/r/jimmicirclejerk", "general"))
             {
                 bot.Run();
                 Console.WriteLine("Bye!");
