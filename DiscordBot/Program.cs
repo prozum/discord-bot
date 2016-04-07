@@ -8,7 +8,6 @@ using RestSharp;
 using Newtonsoft.Json;
 using System.Net;
 using System.Threading;
-using CSScriptLibrary;
 using System.Text.RegularExpressions;
 using Discord.Bot;
 using Discord.API.Model;
@@ -34,12 +33,13 @@ namespace Discord
 			if (bot.TryJoinChannelInGuild(ConfigurationManager.AppSettings.Get("Guild"), ConfigurationManager.AppSettings.Get("Channel")))
             
             {
+				Console.WriteLine("Join succeded!");
                 bot.Run();
                 Console.WriteLine("Bye!");
             }
             else
             {
-                Console.WriteLine("Fail to join!");
+                Console.WriteLine("Join failed!");
             }
 
         }
