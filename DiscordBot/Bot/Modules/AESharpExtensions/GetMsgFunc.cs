@@ -24,7 +24,7 @@ namespace Discord.Bot.Modules.AESharpExtensions
 
             foreach (var item in msgs)
             {
-                res.Items.Add(new Text(item.content));
+                res.Items.Add(new Text(item.Content));
             }
 
             return res;

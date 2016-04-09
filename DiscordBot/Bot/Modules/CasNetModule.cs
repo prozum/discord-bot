@@ -19,7 +19,7 @@ namespace Discord.Bot.Modules
 
         public void MessageGotten(DiscordBot bot, Message message)
         {
-            var match = regex.Match(message.content);
+            var match = regex.Match(message.Content);
 
             if (!match.Success)
                 return;
@@ -44,6 +44,7 @@ namespace Discord.Bot.Modules
             scope.SetVar("arg", Evaluator.Eval(arg));
             scope.SetVar("sendmsg", new SendMsgFunc(scope, bot));
             scope.SetVar("getmsgs", new GetMsgFunc(scope, bot));
+            scope.SetVar("lastmsg", new LastMsgFunc(scope, bot));
 
             evaluator.Parse(str);
 

@@ -1,8 +1,13 @@
-﻿namespace Discord.API.Model
+﻿using Newtonsoft.Json;
+
+namespace Discord.API.Model
 {
     public class Message
     {
-        public string id { get; set; }
-        public string content { get; set; }
+        [JsonProperty("id")]
+        public string Id { get; set; }
+        
+        [JsonProperty("content")]
+        public string Content { get; set; }
     }
 }

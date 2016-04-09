@@ -1,7 +1,10 @@
-﻿namespace Discord.API.Model
+﻿using Newtonsoft.Json;
+
+namespace Discord.API.Model
 {
     public class Authentication
     {
-        public string token { get; set; }
+        [JsonProperty("token")]
+        public string Token { get; set; }
     }
 }

@@ -33,13 +33,13 @@ namespace Discord.Bot
 
         public bool TryJoinChannelInGuild(string groupname, string channelname)
         {
-            Guild = GetGuilds().FirstOrDefault(g => g.name == groupname);
+            Guild = GetGuilds().FirstOrDefault(g => g.Name == groupname);
 
             if (Guild == null)
                 return false;
 
             var channels = GetGuildChannels(Guild);
-            Channel = channels.FirstOrDefault(c => c.name == channelname);
+            Channel = channels.FirstOrDefault(c => c.Name == channelname);
 
             return Channel != null;
         }

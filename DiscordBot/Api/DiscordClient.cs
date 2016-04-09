@@ -13,9 +13,9 @@ namespace Discord.API
     {
         protected RestClient RestClient { get { return restClient; } }
         readonly RestClient restClient = new RestClient(@"https://discordapp.com/api/");
-
-        protected Message Lastest { get; set; }
+        
         protected string Auth { get; set; }
+        protected string LastestMsgId { get; set; }
         
         public Error LastestError { get; set; }
 
@@ -27,9 +27,9 @@ namespace Discord.API
 
             var response = RestClient.Execute(request);
 
-            Auth = ParseResponse<Authentication>(response).token;
+            Auth = ParseResponse<Authentication>(response).Token;
 
-            return LastestError != null;
+            return LastestError == null;
         }
 
         public bool Logout()
@@ -69,7 +69,7 @@ namespace Discord.API
         #region Messages
         public List<Message> GetMessages(Channel channel, string before = null, string after = null, int limit = -1)
         {
-            var resource = new StringBuilder(@"channels/" + channel.id + @"/messages");
+            var resource = new StringBuilder(@"channels/" + channel.Id + @"/messages");
 
             char prefix = '?';
 
@@ -94,25 +94,22 @@ namespace Discord.API
 
             var response = RestClient.Execute(request);
             var res = ParseResponse<List<Message>>(response);
-            var first = res.FirstOrDefault();
+            var latest = res.FirstOrDefault();
 
-
-            if (first != null)
-            {
-                Lastest = first;
-            }
+            if (latest != null)
+                LastestMsgId = latest.Id;
 
             return res;
         }
 
         public List<Message> GetLatestMessages(Channel channel, int limit = -1)
         {
-            return GetMessages(channel, after: (Lastest != null) ? Lastest.id : null, limit: limit);
+            return GetMessages(channel, after: LastestMsgId, limit: limit);
         }
 
         public bool SendMessage(Channel channel, string str, bool tts = false)
         {
-            var request = MakeRequest(@"channels/" + channel.id + @"/messages", Method.POST);
+            var request = MakeRequest(@"channels/" + channel.Id + @"/messages", Method.POST);
             request.AddBody(new { content = str, tts = tts });
 
             var response = RestClient.Execute(request);
@@ -181,7 +178,7 @@ namespace Discord.API
 
         public List<Channel> GetGuildChannels(Guild guild)
         {
-            var request = MakeRequest(@"guilds/" + guild.id + @"/channels", Method.GET);
+            var request = MakeRequest(@"guilds/" + guild.Id + @"/channels", Method.GET);
 
             var response = RestClient.Execute(request);
 

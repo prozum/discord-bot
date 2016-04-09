@@ -15,7 +15,7 @@ namespace Discord.Bot.Modules
 
         public void MessageGotten(DiscordBot bot, Message message)
         {
-            var match = regex.Match(message.content);
+            var match = regex.Match(message.Content);
 
             if (!match.Success)
                 return;
@@ -68,10 +68,10 @@ namespace Discord.Bot.Modules
                         output += mem[mp];
                         break;
                     case ',':
-                        while ((input = bot.GetLatestMessages(bot.Channel).LastOrDefault()) == null && input.content.Length != 0)
+                        while ((input = bot.GetLatestMessages(bot.Channel).LastOrDefault()) == null && input.Content.Length != 0)
                             Thread.Sleep(5);
 
-                        mem[mp] = input.content.Last();
+                        mem[mp] = input.Content.Last();
                         break;
                     case '[':
                         if (mem[mp] == 0)

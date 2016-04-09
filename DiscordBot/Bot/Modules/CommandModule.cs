@@ -24,7 +24,7 @@ namespace Discord.Bot.Modules
 
         public void MessageGotten(DiscordBot bot, Message message)
         {
-            var match = commandregex.Match(message.content);
+            var match = commandregex.Match(message.Content);
 
             if (!match.Success)
                 return;
@@ -71,7 +71,7 @@ namespace Discord.Bot.Modules
                 }
                 else
                 {
-                    bot.RunMessageModules(new Message() { content = "{\n" + match.Groups[2].Value + "}\n" + str });
+                    bot.RunMessageModules(new Message() { Content = "{\n" + match.Groups[2].Value + "}\n" + str });
                 }
             }
             else

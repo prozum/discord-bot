@@ -1,8 +1,13 @@
-﻿namespace Discord.API.Model
+﻿using Newtonsoft.Json;
+
+namespace Discord.API.Model
 {
     public class Guild
     {
-        public string name { get; set; }
-        public string id { get; set; }
+        [JsonProperty("id")]
+        public string Id { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
     }
 }
