@@ -6,15 +6,16 @@ using System.Threading.Tasks;
 using Discord.API.Model;
 using System.Text.RegularExpressions;
 using AESharp;
+using Discord.Bot.Modules.AESharpExtensions;
 
 namespace Discord.Bot.Modules
 {
     public class CasNetModule : IMessageModule
     {
         static readonly int cordsize = 21;
+        static readonly Regex regex = new Regex(@"^(?:(?:{\s*([\s\S]*)}\s*)|\s*)```[^\w\d]*#Æ#([^`]*)```$");
 
-        Evaluator evalor = new Evaluator();
-        Regex regex = new Regex(@"^(?:(?:{\s*([\s\S]*)}\s*)|\s*)```[^\w\d]*#Æ#([^`]*)```$");
+        Evaluator evaluator = new Evaluator();
 
         public void MessageGotten(DiscordBot bot, Message message)
         {
@@ -29,38 +30,35 @@ namespace Discord.Bot.Modules
             }
             catch (Exception e)
             {
-                bot.SendMessage(bot.Channel, "Error!\n" + e.Message);
+                bot.SendMessage("Error!\n" + e.Message);
             }
         }
 
-        private void Interpret(string str, string args, DiscordBot bot)
+        private void Interpret(string str, string arg, DiscordBot bot)
         {
             string output = "";
             Expression res;
 
-            var scope = new Scope(evalor);
-            evalor.SetVar("discord", scope);
+            var scope = new Scope(evaluator);
+            evaluator.SetVar("discord", scope);
+            scope.SetVar("arg", Evaluator.Eval(arg));
+            scope.SetVar("sendmsg", new SendMsgFunc(scope, bot));
+            scope.SetVar("getmsgs", new GetMsgFunc(scope, bot));
 
-            scope.SetVar("args", Evaluator.Eval(args));
+            evaluator.Parse(str);
 
-            evalor.Parse(str);
-
-            if ((res = evalor.Evaluate()) is AESharp.Error)
+            if ((res = evaluator.Evaluate()) is AESharp.Error)
                 output += "Error!: " + res.ToString() + "\n";
 
-            foreach (var effect in evalor.SideEffects)
+            foreach (var effect in evaluator.SideEffects)
             {
-                if (effect is PrintData)
-                {
-                    output += (effect as PrintData).msg + "\n";
-                }
-                else if (effect is PlotData)
+                if (effect is PlotData)
                 {
                     output += MakeAsciiPlot(effect as PlotData);
                 }
             }
 
-            bot.SendMessage(bot.Channel, output);
+            bot.SendMessage(output);
         }
 
         private string MakeAsciiPlot(PlotData effect)

@@ -26,7 +26,7 @@ namespace Discord.Bot.Modules
             }
             catch (Exception e)
             {
-                bot.SendMessage(bot.Channel, e.Message);
+                bot.SendMessage(e.Message);
                 return;
             }
         }
@@ -95,7 +95,7 @@ namespace Discord.Bot.Modules
 
             if (output != "")
             {
-                bot.SendMessage(bot.Channel, output);
+                bot.SendMessage(output);
             }
         }
     }

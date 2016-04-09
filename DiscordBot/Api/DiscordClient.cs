@@ -11,10 +11,11 @@ namespace Discord.API
 {
     public class DiscordClient
     {
+        protected RestClient RestClient { get { return restClient; } }
         readonly RestClient restClient = new RestClient(@"https://discordapp.com/api/");
 
-        Message lastest = null;
-        string auth = "";
+        protected Message Lastest { get; set; }
+        protected string Auth { get; set; }
         
         public Error LastestError { get; set; }
 
@@ -24,9 +25,9 @@ namespace Discord.API
             var request = MakeRequest(@"auth/login", Method.POST);
             request.AddBody(new { email = username, password = password });
 
-            var response = restClient.Execute(request);
+            var response = RestClient.Execute(request);
 
-            auth = ParseResponse<Authentication>(response).token;
+            Auth = ParseResponse<Authentication>(response).token;
 
             return LastestError != null;
         }
@@ -34,9 +35,9 @@ namespace Discord.API
         public bool Logout()
         {
             var request = MakeRequest(@"auth/logout", Method.POST);
-            var response = restClient.Execute(request);
+            var response = RestClient.Execute(request);
 
-            auth = "";
+            Auth = "";
 
             return CheckSuccess(response);
         }
@@ -91,14 +92,14 @@ namespace Discord.API
 
             var request = MakeRequest(resource.ToString(), Method.GET);
 
-            var response = restClient.Execute(request);
+            var response = RestClient.Execute(request);
             var res = ParseResponse<List<Message>>(response);
             var first = res.FirstOrDefault();
 
 
             if (first != null)
             {
-                lastest = first;
+                Lastest = first;
             }
 
             return res;
@@ -106,7 +107,7 @@ namespace Discord.API
 
         public List<Message> GetLatestMessages(Channel channel, int limit = -1)
         {
-            return GetMessages(channel, after: (lastest != null) ? lastest.id : null, limit: limit);
+            return GetMessages(channel, after: (Lastest != null) ? Lastest.id : null, limit: limit);
         }
 
         public bool SendMessage(Channel channel, string str, bool tts = false)
@@ -114,7 +115,7 @@ namespace Discord.API
             var request = MakeRequest(@"channels/" + channel.id + @"/messages", Method.POST);
             request.AddBody(new { content = str, tts = tts });
 
-            var response = restClient.Execute(request);
+            var response = RestClient.Execute(request);
 
             return CheckSuccess(response);
         }
@@ -173,7 +174,7 @@ namespace Discord.API
         public List<Guild> GetGuilds()
         {
             var request = MakeRequest(@"users/@me/guilds", Method.GET);
-            var response = restClient.Execute(request);
+            var response = RestClient.Execute(request);
 
             return ParseResponse<List<Guild>>(response);
         }
@@ -182,7 +183,7 @@ namespace Discord.API
         {
             var request = MakeRequest(@"guilds/" + guild.id + @"/channels", Method.GET);
 
-            var response = restClient.Execute(request);
+            var response = RestClient.Execute(request);
 
             return ParseResponse<List<Channel>>(response);
         }
@@ -341,18 +342,18 @@ namespace Discord.API
         #endregion
 
 
-        private RestRequest MakeRequest(string resource, Method method)
+        protected RestRequest MakeRequest(string resource, Method method)
         {
             var request = new RestRequest(resource, method);
             request.RequestFormat = DataFormat.Json;
 
-            if (auth != null)
-                request.AddHeader("Authorization", auth);
+            if (Auth != null)
+                request.AddHeader("Authorization", Auth);
 
             return request;
         }
 
-        private T ParseResponse<T>(IRestResponse response) where T : new()
+        protected T ParseResponse<T>(IRestResponse response) where T : new()
         {
             if (CheckSuccess(response))
             {
@@ -370,7 +371,7 @@ namespace Discord.API
             return new T();
         }
 
-        private bool CheckSuccess(IRestResponse response)
+        protected bool CheckSuccess(IRestResponse response)
         {
             switch (response.StatusCode)
             {

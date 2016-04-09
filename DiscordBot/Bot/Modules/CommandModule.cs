@@ -27,7 +27,7 @@ namespace Discord.Bot.Modules
             if (isadd.Success)
             {
                 Commands[isadd.Groups[1].Value] = isadd.Groups[2].Value;
-                bot.SendMessage(bot.Channel, isadd.Groups[1].Value + " was added!");
+                bot.SendMessage(isadd.Groups[1].Value + " was added!");
                 bot.Backup();
                 return;
             }
@@ -46,7 +46,7 @@ namespace Discord.Bot.Modules
             }
             else
             {
-                bot.SendMessage(bot.Channel, "Error! Command !" + command + " does not exist!");
+                bot.SendMessage("Error! Command !" + command + " does not exist!");
             }
         }
     }
