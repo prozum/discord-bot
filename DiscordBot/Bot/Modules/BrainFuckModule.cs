@@ -11,7 +11,7 @@ namespace Discord.Bot.Modules
 {
     public class BrainFuckModule : IMessageModule
     {
-        Regex regex = new Regex(@"^```\s*\n*\s*#Brainfuck\n*([^`]*)```$");
+        Regex regex = new Regex(@"^```[\s]*#Brainfuck\n*([^`]*)```$");
 
         public void MessageGotten(DiscordBot bot, Message message)
         {
@@ -20,7 +20,15 @@ namespace Discord.Bot.Modules
             if (!match.Success)
                 return;
 
-            Interpret(match.Groups[1].Value, bot);
+            try
+            {
+                Interpret(match.Groups[1].Value, bot);
+            }
+            catch (Exception e)
+            {
+                bot.SendMessage(bot.Channel, e.Message);
+                return;
+            }
         }
 
         private void Interpret(string str, DiscordBot bot)
@@ -38,64 +46,56 @@ namespace Discord.Bot.Modules
 
             /** The string containing the comands to be executed */
             char[] com = str.ToCharArray();
-            
+
             int EOF = com.Length; //End Of File
 
             char c = '\0';
 
-            try
+            while (ip < EOF && ic++ < 100000)
             {
-                while (ip < EOF && ic++ < 100000)
+
+                // Get the current command
+                c = com[ip];
+
+                // Act based on the current command and the brainfuck spec
+                switch (c)
                 {
+                    case '>': mp++; break;
+                    case '<': mp--; break;
+                    case '+': mem[mp]++; break;
+                    case '-': mem[mp]--; break;
+                    case '.':
+                        output += mem[mp];
+                        break;
+                    case ',':
+                        while ((input = bot.GetLatestMessages(bot.Channel).LastOrDefault()) == null && input.content.Length != 0)
+                            Thread.Sleep(5);
 
-                    // Get the current command
-                    c = com[ip];
+                        mem[mp] = input.content.Last();
+                        break;
+                    case '[':
+                        if (mem[mp] == 0)
+                        {
+                            while (com[ip] != ']') ip++;
+                        }
+                        break;
 
-                    // Act based on the current command and the brainfuck spec
-                    switch (c)
-                    {
-                        case '>': mp++; break;
-                        case '<': mp--; break;
-                        case '+': mem[mp]++; break;
-                        case '-': mem[mp]--; break;
-                        case '.':
-                            output += mem[mp];
-                            break;
-                        case ',':
-                            while ((input = bot.Client.GetLatestMessages(bot.Channel).LastOrDefault()) == null && input.content.Length != 0)
-                                Thread.Sleep(5);
-
-                            mem[mp] = input.content.Last();
-                            break;
-                        case '[':
-                            if (mem[mp] == 0)
-                            {
-                                while (com[ip] != ']') ip++;
-                            }
-                            break;
-
-                        case ']':
-                            if (mem[mp] != 0)
-                            {
-                                while (com[ip] != '[') ip--;
-                            }
-                            break;
-                    }
-
-                    // increment instruction mp
-                    ip++;
-
+                    case ']':
+                        if (mem[mp] != 0)
+                        {
+                            while (com[ip] != '[') ip--;
+                        }
+                        break;
                 }
+
+                // increment instruction mp
+                ip++;
+
             }
-            catch (Exception e)
-            {
-                bot.Client.SendMessage(bot.Channel, string.Format("Error instruction: {0} ip: {1}", c, ip), true);
-                return;
-            }
-            
+
             if (output != "")
             {
-                bot.Client.SendMessage(bot.Channel, output);
+                bot.SendMessage(bot.Channel, output);
             }
         }
     }

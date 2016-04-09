@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Configuration;
-using RestSharp;
-using Newtonsoft.Json;
-using System.Net;
-using System.Threading;
-using System.Text.RegularExpressions;
-using Discord.Bot;
-using Discord.API.Model;
+﻿using Discord.Bot;
 using Discord.Bot.Modules;
+using Newtonsoft.Json;
+using System;
+using System.Configuration;
+using System.IO;
 
 namespace Discord
 {
@@ -19,17 +11,30 @@ namespace Discord
     {
         static void Main(string[] args)
         {
-            var bot = new DiscordBot();
-            var helloworld = new CommandModule();
-            bot.AddModule(helloworld);
-            bot.AddModule(new BrainFuckModule());
-            bot.AddModule(new CasNetModule());
-            helloworld.Commands.Add("!helloworld", (str, bt) => { bt.Client.SendMessage(bt.Channel, "Hello World!", true); });
+            DiscordBot bot;
+
+            if (File.Exists("bot.json"))
+            {
+                using (var file = File.OpenText("bot.json"))
+                {
+                    var settings = new JsonSerializerSettings();
+                    settings.TypeNameHandling = TypeNameHandling.Auto;
+                    bot = JsonConvert.DeserializeObject<DiscordBot>(file.ReadToEnd(), settings);
+                }
+            }
+            else
+            {
+                bot = new DiscordBot();
+                var helloworld = new CommandModule();
+                bot.AddModule(helloworld);
+                bot.AddModule(new BrainFuckModule());
+                bot.AddModule(new CasNetModule());
+            }
 
             var email = ConfigurationManager.AppSettings.Get("EMail");
             var password = ConfigurationManager.AppSettings.Get("Password");
 
-            bot.Client.Login(email, password);
+            bot.Login(email, password);
 			if (bot.TryJoinChannelInGuild(ConfigurationManager.AppSettings.Get("Guild"), ConfigurationManager.AppSettings.Get("Channel")))
             
             {
@@ -41,7 +46,6 @@ namespace Discord
             {
                 Console.WriteLine("Join failed!");
             }
-
         }
     }
 }

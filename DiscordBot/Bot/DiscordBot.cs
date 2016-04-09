@@ -8,67 +8,93 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace Discord.Bot
 {
-    public class DiscordBot
+
+    public class DiscordBot : DiscordClient
     {
-        public DiscordClient Client { get; set; }
         public Channel Channel { get; private set; }
         public Guild Guild { get; private set; }
+        public List<IBotModule> Modules { get; set; }
 
-        List<IBotModule> modules = new List<IBotModule>();
+        bool running;
 
         public DiscordBot()
-        {
-            Client = new DiscordClient();
-        }
+            : this(new List<IBotModule>())
+        { }
 
-        public DiscordBot(DiscordClient client)
+        public DiscordBot(List<IBotModule> modules)
         {
-            Client = client;
+            Modules = modules;
         }
 
         public bool TryJoinChannelInGuild(string groupname, string channelname)
         {
-            Guild = Client.GetGuilds().FirstOrDefault(g => g.name == groupname);
+            Guild = GetGuilds().FirstOrDefault(g => g.name == groupname);
 
             if (Guild == null)
                 return false;
 
-            var channels = Client.GetGuildChannels(Guild);
+            var channels = GetGuildChannels(Guild);
             Channel = channels.FirstOrDefault(c => c.name == channelname);
-            
+
             return Channel != null;
         }
 
         public void Run()
         {
-            while (Channel != null)
+            GetLatestMessages(Channel, limit: 1);
+            running = true;
+
+            while (running && Channel != null)
             {
-                var messages = Client.GetLatestMessages(Channel, limit: 5);
+                var messages = GetLatestMessages(Channel, limit: 5);
 
                 foreach (var message in messages)
                 {
-                    foreach (var module in modules)
-                    {
-                        if (module is IMessageModule)
-                            (module as IMessageModule).MessageGotten(this, message);
-                    }
+                    RunMessageModules(message);
                 }
 
-                Thread.Sleep(50);
+                Thread.Sleep(100);
+            }
+        }
+
+        public void Backup()
+        {
+            var settings = new JsonSerializerSettings();
+            settings.TypeNameHandling = TypeNameHandling.Auto;
+
+            using (var file = File.CreateText("bot.json"))
+            {
+                file.Write(JsonConvert.SerializeObject(this, Formatting.Indented, settings));
+            }
+        }
+
+        public void Stop()
+        {
+            running = false;
+        }
+
+        public void RunMessageModules(Message message)
+        {
+            foreach (var module in Modules)
+            {
+                if (module is IMessageModule)
+                    (module as IMessageModule).MessageGotten(this, message);
             }
         }
 
         public void AddModule(IBotModule module)
         {
-            modules.Add(module);
+            Modules.Add(module);
         }
 
         public void RemoveModule(IBotModule module)
         {
-            modules.Remove(module);
+            Modules.Remove(module);
         }
     }
 }
