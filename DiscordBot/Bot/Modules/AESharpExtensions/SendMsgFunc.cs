@@ -15,7 +15,7 @@ namespace Discord.Bot.Modules.AESharpExtensions
             ValidArguments = new List<ArgumentType>()
             {
                 ArgumentType.Expression,
-                ArgumentType.Bool
+                ArgumentType.Boolean
             };
         }
 
