@@ -13,36 +13,66 @@ namespace Discord.Bot.Modules
         public Dictionary<string, string> Commands { get; set; }
 
         Regex commandregex = new Regex(@"^!([\w\d]*)(?:([\s\S]*)| )$");
-        Regex addregex = new Regex("^!add \"([\\w\\d]*)\"([\\s\\S]*)$");
+        Regex addcommandregex = new Regex("^\\s*\"([\\w\\d]*)\"\\s*([\\s\\S]*)");
 
         public CommandModule()
         {
             Commands = new Dictionary<string, string>();
+            Commands.Add("add", "");
+            Commands.Add("commands", "");
         }
 
         public void MessageGotten(DiscordBot bot, Message message)
         {
-            var isadd = addregex.Match(message.content);
-
-            if (isadd.Success)
-            {
-                Commands[isadd.Groups[1].Value] = isadd.Groups[2].Value;
-                bot.SendMessage(isadd.Groups[1].Value + " was added!");
-                bot.Backup();
-                return;
-            }
-
             var match = commandregex.Match(message.content);
 
             if (!match.Success)
                 return;
 
             var command = match.Groups[1].Value;
+            var arg = match.Groups[2].Value;
             string str;
 
             if (Commands.TryGetValue(command, out str))
             {
-                bot.RunMessageModules(new Message() { content = "{\n" + match.Groups[2].Value + "}\n" + str });
+                if (command == "add")
+                {
+                    var addmatch = addcommandregex.Match(arg);
+                    if (addmatch.Success)
+                    {
+                        Commands[addmatch.Groups[1].Value] = addmatch.Groups[2].Value;
+                        bot.SendMessage(addmatch.Groups[1].Value + " was added!");
+                        bot.Backup();
+                    }
+                    else
+                    {
+                        bot.SendMessage("Error! Invalid name for command!");
+                    }
+                }
+                else if (command == "commands")
+                {
+                    var matcharg = match.Groups[2].Value.Trim(' ', '\n');
+                    var commandlist = "";
+                    foreach (var item in Commands)
+                    {
+                        if (item.Key.Contains(matcharg))
+                            commandlist += item.Key + "\n";
+                    }
+
+                    if (matcharg != "")
+                    {
+                        bot.SendMessage("All commands containing \"" + matcharg + "\":\n" + commandlist);
+                    } 
+                    else
+                    {
+
+                        bot.SendMessage("All commands:\n" + commandlist);
+                    }
+                }
+                else
+                {
+                    bot.RunMessageModules(new Message() { content = "{\n" + match.Groups[2].Value + "}\n" + str });
+                }
             }
             else
             {
