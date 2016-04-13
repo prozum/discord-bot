@@ -58,7 +58,7 @@ namespace Discord.Bot
                     RunMessageModules(message);
                 }
 
-                Thread.Sleep(100);
+                Thread.Sleep(500);
             }
         }
 
