@@ -27,13 +27,13 @@ namespace Discord.API.Model
 
         [JsonProperty("id")]
         public string Id { get; set; }
-
+        
         [JsonProperty("edited_timestamp")]
         public DateTime? EditedTimestamp { get; set; }
 
         //Fix type
         [JsonProperty("author")]
-        public object Author { get; set; }
+        public User Author { get; set; }
 
         [JsonProperty("content")]
         public string Content { get; set; }

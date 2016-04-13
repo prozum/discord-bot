@@ -59,6 +59,8 @@
     <Compile Include="Bot\Modules\CommandModule.cs" />
     <Compile Include="Bot\Modules\IBotModule.cs" />
     <Compile Include="Bot\Modules\IMessageModule.cs" />
+    <Compile Include="Bot\Modules\BashModule.cs" />
+    <Compile Include="Api\Model\User.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

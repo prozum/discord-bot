@@ -70,8 +70,8 @@ namespace Discord.Bot.Modules
                     }
                 }
                 else
-                {
-                    bot.RunMessageModules(new Message() { Content = "{\n" + match.Groups[2].Value + "}\n" + str });
+				{
+					//bot.NewMessage(bot, new Message() { Content = "{\n" + match.Groups[2].Value + "}\n" + str });
                 }
             }
             else
