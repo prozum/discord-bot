@@ -25,18 +25,15 @@ namespace Discord
             else
             {
                 bot = new DiscordBot();
-                var helloworld = new CommandModule();
-                bot.AddModule(helloworld);
-                bot.AddModule(new BrainFuckModule());
-                bot.AddModule(new CasNetModule());
+				bot.AddMessageModule(new CommandModule());
+                bot.AddMessageModule(new BrainFuckModule());
+                bot.AddMessageModule(new CasNetModule());
+				bot.AddMessageModule(new BashModule());
             }
 
-            var email = ConfigurationManager.AppSettings.Get("EMail");
-            var password = ConfigurationManager.AppSettings.Get("Password");
-
-            bot.Login(email, password);
+			bot.BotName = "bot";
+			bot.Login(ConfigurationManager.AppSettings.Get("EMail"), ConfigurationManager.AppSettings.Get("Password"));
 			if (bot.TryJoinChannelInGuild(ConfigurationManager.AppSettings.Get("Guild"), ConfigurationManager.AppSettings.Get("Channel")))
-            
             {
 				Console.WriteLine("Join succeded!");
                 bot.Run();

@@ -13,14 +13,19 @@ using RestSharp;
 
 namespace Discord.Bot
 {
+	public delegate void NewMessageHandler(DiscordBot bot, Message msg);
 
     public class DiscordBot : DiscordClient
     {
+		public string BotName;
+
         public Channel Channel { get; private set; }
         public Guild Guild { get; private set; }
         public List<IBotModule> Modules { get; set; }
+		public event NewMessageHandler NewMessage;
 
         bool running;
+
 
         public DiscordBot()
             : this(new List<IBotModule>())
@@ -55,8 +60,11 @@ namespace Discord.Bot
 
                 foreach (var message in messages)
                 {
-                    RunMessageModules(message);
+					Console.WriteLine("Got message:" + message.Content);
+					if (message.Author.Username != BotName)
+						NewMessage(this, message);
                 }
+		
 
                 Thread.Sleep(100);
             }
@@ -83,6 +91,7 @@ namespace Discord.Bot
             if (Channel == null)
                 return new List<Message>();
 
+
             return GetLatestMessages(Channel, limit);
         }
 
@@ -102,21 +111,12 @@ namespace Discord.Bot
             running = false;
         }
 
-        public void RunMessageModules(Message message)
+        public void AddMessageModule(IMessageModule module)
         {
-            foreach (var module in Modules)
-            {
-                if (module is IMessageModule)
-                    (module as IMessageModule).MessageGotten(this, message);
-            }
+			NewMessage += module.MessageGotten;
         }
 
-        public void AddModule(IBotModule module)
-        {
-            Modules.Add(module);
-        }
-
-        public void RemoveModule(IBotModule module)
+        public void RemoveMessageModule(IBotModule module)
         {
             Modules.Remove(module);
         }
