@@ -114,11 +114,7 @@ namespace Discord.Bot
         public void AddMessageModule(IMessageModule module)
         {
 			NewMessage += module.MessageGotten;
-        }
-
-        public void RemoveMessageModule(IBotModule module)
-        {
-            Modules.Remove(module);
+            Modules.Add(module);
         }
     }
 }

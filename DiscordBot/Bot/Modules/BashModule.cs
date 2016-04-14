@@ -7,7 +7,7 @@ using Discord.API.Model;
 
 namespace Discord.Bot.Modules
 {
-	public class BashModule : IMessageModule
+	public class BashModule : IMessageModule, ICommandable
 	{
 		static readonly Regex regex = new Regex(@"#!([^`]*)\n([^`]*)");
 		string helpmessage = "Interpreters:\n" +
@@ -37,7 +37,24 @@ namespace Discord.Bot.Modules
 			Interpret(match.Groups[1].Value, match.Groups[2].Value, bot);
 		}
 
-		private void Interpret(string interpreter, string str, DiscordBot bot)
+        public bool TryRunCommand(string command, DiscordBot bot)
+        {
+            if (command.StartsWith("#!help"))
+            {
+                bot.SendMessage(helpmessage);
+                return false;
+            }
+
+            var match = regex.Match(command);
+
+            if (!match.Success)
+                return false;
+
+            Interpret(match.Groups[1].Value, match.Groups[2].Value, bot);
+            return true;
+        }
+
+        private void Interpret(string interpreter, string str, DiscordBot bot)
 		{
 			var filename = "/tmp/" + Guid.NewGuid().ToString();
 			System.IO.File.WriteAllText(filename, "#!/usr/bin/env " + interpreter + "\n" + str);

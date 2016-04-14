@@ -12,7 +12,8 @@ namespace Discord
         static void Main(string[] args)
         {
             DiscordBot bot;
-
+            
+            /*
             if (File.Exists("bot.json"))
             {
                 using (var file = File.OpenText("bot.json"))
@@ -22,7 +23,7 @@ namespace Discord
                     bot = JsonConvert.DeserializeObject<DiscordBot>(file.ReadToEnd(), settings);
                 }
             }
-            else
+            else */
             {
                 bot = new DiscordBot();
 				bot.AddMessageModule(new CommandModule());

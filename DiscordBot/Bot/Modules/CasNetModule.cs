@@ -10,10 +10,10 @@ using Discord.Bot.Modules.AESharpExtensions;
 
 namespace Discord.Bot.Modules
 {
-    public class CasNetModule : IMessageModule
+    public class CasNetModule : IMessageModule, ICommandable
     {
         static readonly int cordsize = 21;
-        static readonly Regex regex = new Regex(@"^(?:(?:{\s*([\s\S]*)}\s*)|\s*)```[^\w\d]*#Æ#([^`]*)```$");
+        static readonly Regex regex = new Regex(@"^```[^\w\d]*#Æ#([^`]*)```$");
 
         Evaluator evaluator = new Evaluator();
 
@@ -26,7 +26,7 @@ namespace Discord.Bot.Modules
 
             try
             {
-                Interpret(match.Groups[2].Value, match.Groups[1].Value, bot);
+                Interpret(match.Groups[1].Value, bot);
             }
             catch (Exception e)
             {
@@ -34,14 +34,32 @@ namespace Discord.Bot.Modules
             }
         }
 
-        private void Interpret(string str, string arg, DiscordBot bot)
+        public bool TryRunCommand(string command, DiscordBot bot)
+        {
+            var match = regex.Match(command);
+
+            if (!match.Success)
+                return false;
+
+            try
+            {
+                Interpret(match.Groups[1].Value, bot);
+                return true;
+            }
+            catch (Exception e)
+            {
+                bot.SendMessage("Error!\n" + e.Message);
+                return false;
+            }
+        }
+
+        private void Interpret(string str, DiscordBot bot)
         {
             string output = "";
             Expression res;
 
             var scope = new Scope(evaluator);
             evaluator.SetVar("discord", scope);
-            scope.SetVar("arg", Evaluator.Eval(arg));
             scope.SetVar("sendmsg", new SendMsgFunc(scope, bot));
             scope.SetVar("getmsgs", new GetMsgFunc(scope, bot));
             scope.SetVar("lastmsg", new LastMsgFunc(scope, bot));

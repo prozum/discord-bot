@@ -17,9 +17,11 @@ namespace Discord.Bot.Modules
 
         public CommandModule()
         {
-            Commands = new Dictionary<string, string>();
-            Commands.Add("add", "");
-            Commands.Add("commands", "");
+            Commands = new Dictionary<string, string>()
+            {
+                { "add", "" },
+                { "commands", "" }
+            };
         }
 
         public void MessageGotten(DiscordBot bot, Message message)
@@ -65,13 +67,22 @@ namespace Discord.Bot.Modules
                     } 
                     else
                     {
-
                         bot.SendMessage("All commands:\n" + commandlist);
                     }
                 }
                 else
 				{
-					//bot.NewMessage(bot, new Message() { Content = "{\n" + match.Groups[2].Value + "}\n" + str });
+                    str = str.Replace("##arg##", arg);
+                    foreach (var module in bot.Modules)
+                    {
+                        if (module is ICommandable)
+                        {
+                            if ((module as ICommandable).TryRunCommand(str, bot))
+                                return;
+                        }
+                    }
+
+                    bot.SendMessage("Warning. Command !" + command + " wasn't preformed by any modules in the bot.");
                 }
             }
             else

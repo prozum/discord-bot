@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Api\Model\Permission.cs" />
+    <Compile Include="Bot\Modules\ICommandable.cs" />
     <Compile Include="Bot\Modules\AESharpExtensions\DiscordSysFunc.cs" />
     <Compile Include="Bot\Modules\AESharpExtensions\GetMsgFunc.cs" />
     <Compile Include="Bot\Modules\AESharpExtensions\LastMsgFunc.cs" />
