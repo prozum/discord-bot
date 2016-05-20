@@ -3,37 +3,38 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Discord.API.Model;
 using System.Threading;
 using System.Text.RegularExpressions;
+using Discord.Bot.BaseModules;
+using DiscordSharp.Events;
+using DiscordSharp.Objects;
 
 namespace Discord.Bot.Modules
 {
-    public class BrainFuckModule : IMessageModule
+    public class BrainFuckModule : BaseMessageModule
     {
-        Regex regex = new Regex(@"^```[\s]*#Brainfuck\n*([^`]*)```$");
+        static readonly string _commandName = "#Æ#";
 
-        public void MessageGotten(DiscordBot bot, Message message)
+        public override void MessageReceived(object sender, DiscordMessageEventArgs e)
         {
-            var match = regex.Match(message.Content);
-
-            if (!match.Success)
-                return;
+            var channel = e.Channel;
+            var message = e.Message;
 
             try
             {
-                Interpret(match.Groups[1].Value, bot);
+                if (message.Content.StartsWith(_commandName))
+                {
+                    Interpret(message.Content.Remove(0, _commandName.Count()), channel);
+                }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                bot.SendMessage(e.Message);
-                return;
+                channel.SendMessage("Error!\n" + ex.Message);
             }
         }
 
-        private void Interpret(string str, DiscordBot bot)
+        private void Interpret(string str, DiscordChannel channel)
         {
-            Message input = null;
             string output = "";
 
             int ic = 0;
@@ -67,12 +68,6 @@ namespace Discord.Bot.Modules
                     case '.':
                         output += mem[mp];
                         break;
-                    case ',':
-                        while ((input = bot.GetLatestMessages(bot.Channel).LastOrDefault()) == null && input.Content.Length != 0)
-                            Thread.Sleep(5);
-
-                        mem[mp] = input.Content.Last();
-                        break;
                     case '[':
                         if (mem[mp] == 0)
                         {
@@ -95,7 +90,7 @@ namespace Discord.Bot.Modules
 
             if (output != "")
             {
-                bot.SendMessage(output);
+                channel.SendMessage(output);
             }
         }
     }

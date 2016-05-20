@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using Discord.API.Model;
+using Discord.Bot.BaseModules;
+using DiscordSharp.Events;
+using DiscordSharp;
+using DiscordSharp.Objects;
 
 namespace Discord.Bot.Modules
 {
-	public class BashModule : IMessageModule, ICommandable
-	{
+	public class BashModule : BaseMessageModule
+    {
 		static readonly Regex regex = new Regex(@"#!([^`]*)\n([^`]*)");
 		string helpmessage = "Interpreters:\n" +
 							 "\tbash     Bourne-again shell\n" +
@@ -22,39 +25,26 @@ namespace Discord.Bot.Modules
 			                 "\tcsharp   C#\n" +
 			                 "\tcling    C/C++\n";
 
-		public void MessageGotten(DiscordBot bot, Message message)
-		{
-			if (message.Content.StartsWith("#!help")) {
-				bot.SendMessage(helpmessage);
-				return;
-			}
-			
-			var match = regex.Match(message.Content);
-
-			if (!match.Success)
-				return;
-
-			Interpret(match.Groups[1].Value, match.Groups[2].Value, bot);
-		}
-
-        public bool TryRunCommand(string command, DiscordBot bot)
+        public override void MessageReceived(object sender, DiscordMessageEventArgs e)
         {
-            if (command.StartsWith("#!help"))
+            var channel = e.Channel;
+            var message = e.Message;
+
+            if (message.Content.StartsWith("#!help"))
             {
-                bot.SendMessage(helpmessage);
-                return false;
+                channel.SendMessage(helpmessage);
+                return;
             }
 
-            var match = regex.Match(command);
+            var match = regex.Match(message.Content);
 
             if (!match.Success)
-                return false;
+                return;
 
-            Interpret(match.Groups[1].Value, match.Groups[2].Value, bot);
-            return true;
+            Interpret(match.Groups[1].Value, match.Groups[2].Value, channel);
         }
 
-        private void Interpret(string interpreter, string str, DiscordBot bot)
+        private void Interpret(string interpreter, string str, DiscordChannel channel)
 		{
 			var filename = "/tmp/" + Guid.NewGuid().ToString();
 			System.IO.File.WriteAllText(filename, "#!/usr/bin/env " + interpreter + "\n" + str);
@@ -67,8 +57,8 @@ namespace Discord.Bot.Modules
 			proc.StartInfo.RedirectStandardOutput = true;
 			proc.StartInfo.RedirectStandardError = true;
 			//proc.StartInfo.RedirectStandardInput = true;
-			proc.OutputDataReceived += (s, e) => bot.SendMessage(e.Data);
-			proc.ErrorDataReceived += (s, e) => bot.SendMessage(e.Data);
+			proc.OutputDataReceived += (s, e) => channel.SendMessage(e.Data);
+			proc.ErrorDataReceived += (s, e) => channel.SendMessage(e.Data);
 			/*bot.NewMessage += (DiscordBot _, Message msg) => { 
 				if (!proc.HasExited)
 					proc.StandardInput.Write(msg.Content);

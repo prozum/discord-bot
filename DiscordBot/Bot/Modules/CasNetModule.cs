@@ -3,66 +3,48 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Discord.API.Model;
 using System.Text.RegularExpressions;
 using AESharp;
 using Discord.Bot.Modules.AESharpExtensions;
+using Discord.Bot.BaseModules;
+using DiscordSharp.Events;
+using DiscordSharp.Objects;
 
 namespace Discord.Bot.Modules
 {
-    public class CasNetModule : IMessageModule, ICommandable
+    public class CasNetModule : BaseMessageModule
     {
-        static readonly int cordsize = 21;
-        static readonly Regex regex = new Regex(@"^```[^\w\d]*#Æ#([^`]*)```$");
+        static readonly int _cordsize = 21;
+        static readonly string _commandName = "#Æ#";
 
         Evaluator evaluator = new Evaluator();
 
-        public void MessageGotten(DiscordBot bot, Message message)
+        public override void MessageReceived(object sender, DiscordMessageEventArgs e)
         {
-            var match = regex.Match(message.Content);
-
-            if (!match.Success)
-                return;
+            var channel = e.Channel;
+            var message = e.Message;
 
             try
             {
-                Interpret(match.Groups[1].Value, bot);
+                if (message.Content.StartsWith(_commandName))
+                {
+                    Interpret(message.Content.Remove(0, _commandName.Count()), channel);
+                }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                bot.SendMessage("Error!\n" + e.Message);
+                channel.SendMessage("Error!\n" + ex.Message);
             }
         }
 
-        public bool TryRunCommand(string command, DiscordBot bot)
-        {
-            var match = regex.Match(command);
-
-            if (!match.Success)
-                return false;
-
-            try
-            {
-                Interpret(match.Groups[1].Value, bot);
-                return true;
-            }
-            catch (Exception e)
-            {
-                bot.SendMessage("Error!\n" + e.Message);
-                return false;
-            }
-        }
-
-        private void Interpret(string str, DiscordBot bot)
+        private void Interpret(string str, DiscordChannel channel)
         {
             string output = "";
             Expression res;
 
             var scope = new Scope(evaluator);
             evaluator.SetVar("discord", scope);
-            scope.SetVar("sendmsg", new SendMsgFunc(scope, bot));
-            scope.SetVar("getmsgs", new GetMsgFunc(scope, bot));
-            scope.SetVar("lastmsg", new LastMsgFunc(scope, bot));
+            scope.SetVar("sendmsg", new SendMsgFunc(scope, channel));
 
             evaluator.Parse(str);
 
@@ -77,18 +59,18 @@ namespace Discord.Bot.Modules
                 }
             }
 
-            bot.SendMessage(output);
+            channel.SendMessage(output);
         }
 
         private string MakeAsciiPlot(PlotData effect)
         {
             string res = "";
 
-            for (int y = 0; y < cordsize; y++)
+            for (int y = 0; y < _cordsize; y++)
             {
-                for (int x = 0; x < cordsize; x++)
+                for (int x = 0; x < _cordsize; x++)
                 {
-                    if (y - cordsize / 2 == 0 || x - cordsize / 2 == 0)
+                    if (y - _cordsize / 2 == 0 || x - _cordsize / 2 == 0)
                     {
                         res += " . ";
                     }
@@ -97,7 +79,7 @@ namespace Discord.Bot.Modules
                         bool notfound = true;
                         for (int i = 0; i < effect.x.Count; i++)
                         {
-                            if (((int)effect.x[i].@decimal == x - cordsize / 2 && (int)effect.y[i].@decimal == ((cordsize - 1) - y) - cordsize / 2))
+                            if (((int)effect.x[i].@decimal == x - _cordsize / 2 && (int)effect.y[i].@decimal == ((_cordsize - 1) - y) - _cordsize / 2))
                             {
                                 res += " . ";
                                 notfound = false;

@@ -30,6 +30,14 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DiscordSharp, Version=0.6.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DiscordSharp.0.6.2.0-rc1\lib\DiscordSharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NAudio, Version=1.7.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.1.7.3\lib\net35\NAudio.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="Microsoft.CSharp" />
@@ -39,29 +47,26 @@
     <Reference Include="RestSharp">
       <HintPath>..\packages\RestSharp.105.2.3\lib\net45\RestSharp.dll</HintPath>
     </Reference>
+    <Reference Include="websocket-sharp, Version=1.0.2.36589, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebSocketSharp.1.0.3-rc9\lib\websocket-sharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="WebSocket4Net, Version=0.14.1.0, Culture=neutral, PublicKeyToken=eb4e154b696bf72a, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebSocket4Net.0.14.1\lib\net45\WebSocket4Net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Api\Model\Permission.cs" />
-    <Compile Include="Bot\Modules\ICommandable.cs" />
+    <Compile Include="Bot\BaseModules\BaseMessageModule.cs" />
+    <Compile Include="Bot\Interfaces\IImplementsEverything.cs" />
+    <Compile Include="Bot\Interfaces\IMessageModule.cs" />
     <Compile Include="Bot\Modules\AESharpExtensions\DiscordSysFunc.cs" />
-    <Compile Include="Bot\Modules\AESharpExtensions\GetMsgFunc.cs" />
-    <Compile Include="Bot\Modules\AESharpExtensions\LastMsgFunc.cs" />
     <Compile Include="Bot\Modules\AESharpExtensions\SendMsgFunc.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Api\DiscordClient.cs" />
-    <Compile Include="Api\Model\Auth.cs" />
-    <Compile Include="Api\Model\Channel.cs" />
-    <Compile Include="Api\Model\Error.cs" />
-    <Compile Include="Api\Model\Guild.cs" />
-    <Compile Include="Api\Model\Message.cs" />
     <Compile Include="Bot\DiscordBot.cs" />
     <Compile Include="Bot\Modules\BrainFuckModule.cs" />
     <Compile Include="Bot\Modules\CasNetModule.cs" />
-    <Compile Include="Bot\Modules\CommandModule.cs" />
-    <Compile Include="Bot\Modules\IBotModule.cs" />
-    <Compile Include="Bot\Modules\IMessageModule.cs" />
     <Compile Include="Bot\Modules\BashModule.cs" />
-    <Compile Include="Api\Model\User.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -74,5 +79,9 @@
       <Project>{107821FC-4FCF-4DAE-81CD-78C1E3656033}</Project>
       <Name>AESharp</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="libsodium.dll" />
+    <Content Include="opus.dll" />
   </ItemGroup>
 </Project>

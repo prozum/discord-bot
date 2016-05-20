@@ -1,120 +1,90 @@
 ﻿using Discord.Bot.Modules;
-using Discord.API;
-using Discord.API.Model;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using System.IO;
-using RestSharp;
+using DiscordSharp;
+using Discord.Bot.Interfaces;
+using System;
 
 namespace Discord.Bot
 {
-	public delegate void NewMessageHandler(DiscordBot bot, Message msg);
-
-    public class DiscordBot : DiscordClient
+    public class DiscordBot
     {
-		public string BotName;
+        DiscordClient _client;
 
-        public Channel Channel { get; private set; }
-        public Guild Guild { get; private set; }
-        public List<IBotModule> Modules { get; set; }
-		public event NewMessageHandler NewMessage;
-
-        bool running;
-
-
-        public DiscordBot()
-            : this(new List<IBotModule>())
-        { }
-
-        public DiscordBot(List<IBotModule> modules)
+        public DiscordBot(string token)
         {
-            Modules = modules;
+            _client = new DiscordClient(token, true);
         }
 
-        public bool TryJoinChannelInGuild(string groupname, string channelname)
+        public void Start()
         {
-            Guild = GetGuilds().FirstOrDefault(g => g.Name == groupname);
-
-            if (Guild == null)
-                return false;
-
-            var channels = GetGuildChannels(Guild);
-            Channel = channels.FirstOrDefault(c => c.Name == channelname);
-
-            return Channel != null;
-        }
-
-        public void Run()
-        {
-            GetLatestMessages(Channel, limit: 1);
-            running = true;
-
-            while (running && Channel != null)
+            try
             {
-                var messages = GetLatestMessages(Channel, limit: 5);
+                Console.WriteLine("Sending login request...");
+                _client.SendLoginRequest();
 
-                foreach (var message in messages)
-                {
-					Console.WriteLine("Got message:" + message.Content);
-					if (message.Author.Username != BotName)
-						NewMessage(this, message);
-                }
-		
+                Console.WriteLine("Connecting client in separate thread...");
+                _client.Connect();
 
-                Thread.Sleep(500);
+                Console.WriteLine("Client connected!");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Something went wrong!\n" + e.Message + "\nPress any key to close this window.");
             }
         }
 
-        public bool SendMessage(string str, bool tts = false)
+        public void AddModule(IMessageModule module)
         {
-            if (Channel == null)
-                return false;
-
-            return SendMessage(Channel, str, tts);
+            _client.MentionReceived             += module.MentionReceived;
+            _client.MessageDeleted              += module.MessageDeleted;
+            _client.MessageEdited               += module.MessageEdited;
+            _client.MessageReceived             += module.MessageReceived;
+            _client.PrivateMessageDeleted       += module.PrivateMessageDeleted;
+            _client.PrivateMessageReceived      += module.PrivateMessageReceived;
+            _client.UnknownMessageTypeReceived  += module.UnknownMessageTypeReceived;
+            _client.URLMessageAutoUpdate        += module.URLMessageAutoUpdate;
         }
 
-        public List<Message> GetMessages(string before = null, string after = null, int limit = -1)
+        public void AddModule(IImplementsEverything module)
         {
-            if (Channel == null)
-                return new List<Message>();
-
-            return GetMessages(Channel, before, after, limit);
-        }
-
-        public List<Message> GetLatestMessages(int limit = -1)
-        {
-            if (Channel == null)
-                return new List<Message>();
-
-
-            return GetLatestMessages(Channel, limit);
-        }
-
-        public void Backup()
-        {
-            var settings = new JsonSerializerSettings();
-            settings.TypeNameHandling = TypeNameHandling.Auto;
-
-            using (var file = File.CreateText("bot.json"))
-            {
-                file.Write(JsonConvert.SerializeObject(this, Formatting.Indented, settings));
-            }
-        }
-
-        public void Stop()
-        {
-            running = false;
-        }
-
-        public void AddMessageModule(IMessageModule module)
-        {
-			NewMessage += module.MessageGotten;
-            Modules.Add(module);
+            _client.AudioPacketReceived             += module.AudioPacketReceived;
+            _client.BanRemoved                      += module.BanRemoved;
+            _client.ChannelCreated                  += module.ChannelCreated;
+            _client.ChannelDeleted                  += module.ChannelDeleted;
+            _client.ChannelUpdated                  += module.ChannelUpdated;
+            _client.Connected                       += module.Connected;
+            _client.GuildAvailable                  += module.GuildAvailable;
+            _client.GuildCreated                    += module.GuildCreated;
+            _client.GuildDeleted                    += module.GuildDeleted;
+            _client.GuildMemberBanned               += module.GuildMemberBanned;
+            _client.GuildMemberUpdated              += module.GuildMemberUpdated;
+            _client.GuildUpdated                    += module.GuildUpdated;
+            _client.KeepAliveSent                   += module.KeepAliveSent;
+            _client.MentionReceived                 += module.MentionReceived;
+            _client.MessageDeleted                  += module.MessageDeleted;
+            _client.MessageEdited                   += module.MessageEdited;
+            _client.MessageReceived                 += module.MessageReceived;
+            _client.PresenceUpdated                 += module.PresenceUpdated;
+            _client.PrivateChannelCreated           += module.PrivateChannelCreated;
+            _client.PrivateChannelDeleted           += module.PrivateChannelDeleted;
+            _client.PrivateMessageDeleted           += module.PrivateMessageDeleted;
+            _client.PrivateMessageReceived          += module.PrivateMessageReceived;
+            _client.RoleDeleted                     += module.RoleDeleted;
+            _client.RoleUpdated                     += module.RoleUpdated;
+            _client.SocketClosed                    += module.SocketClosed;
+            _client.SocketOpened                    += module.SocketOpened;
+            _client.UnknownMessageTypeReceived      += module.UnknownMessageTypeReceived;
+            _client.URLMessageAutoUpdate            += module.URLMessageAutoUpdate;
+            _client.UserAddedToServer               += module.UserAddedToServer;
+            _client.UserLeftVoiceChannel            += module.UserLeftVoiceChannel;
+            _client.UserRemovedFromServer           += module.UserRemovedFromServer;
+            _client.UserSpeaking                    += module.UserSpeaking;
+            _client.UserTypingStart                 += module.UserTypingStart;
+            _client.UserUpdate                      += module.UserUpdate;
+            _client.VoiceClientConnected            += module.VoiceClientConnected;
+            _client.VoiceClientDebugMessageReceived += module.VoiceClientDebugMessageReceived;
+            _client.VoiceQueueEmpty                 += module.VoiceQueueEmpty;
+            _client.VoiceStateUpdate                += module.VoiceStateUpdate;
         }
     }
 }

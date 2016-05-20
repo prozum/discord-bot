@@ -1,4 +1,5 @@
 ﻿using AESharp;
+using DiscordSharp.Objects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +10,11 @@ namespace Discord.Bot.Modules.AESharpExtensions
 {
     public abstract class DiscordSysFunc : SysFunc
     {
-        public DiscordBot Bot { get; set; }
+        public DiscordChannel Channel { get; set; }
 
-        public DiscordSysFunc(string name, Scope scope, DiscordBot bot) : base(name, scope)
+        public DiscordSysFunc(string name, Scope scope, DiscordChannel channel) : base(name, scope)
         {
-            Bot = bot;
+            Channel = channel;
         }
     }
 }
