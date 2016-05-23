@@ -1,7 +1,10 @@
 ﻿using Discord.Bot.BaseModules;
 using DiscordSharp.Events;
 using MyAnimeListSharp.Auth;
+using MyAnimeListSharp.Core;
 using MyAnimeListSharp.Facade;
+using MyAnimeListSharp.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,14 +14,24 @@ namespace Discord.Bot.Modules
     {
         readonly ICredentialContext _credential;
         readonly SearchMethods _search;
+        readonly SearchResponseDeserializer<AnimeSearchResponse> _animeDeserializer = new SearchResponseDeserializer<AnimeSearchResponse>();
+        readonly SearchResponseDeserializer<MangaSearchResponse> _mangoDeserializer = new SearchResponseDeserializer<MangaSearchResponse>();
 
-        static readonly string _commandName = "#anime";
+        static readonly string _animeCommand = "#anime";
+        static readonly string _mangoCommand = "#mango";
         static readonly string _animeMessage =
             "Title: {0}\n" +
             "English Title: {1}\n" +
             "Episodes: {2}\n" +
             "Link: http://myanimelist.net/anime/{3}\n" +
-            "Image: {4}" +
+            "Synopsis: {4}\n";
+
+        static readonly string _mangoMessage =
+            "Title: {0}\n" +
+            "English Title: {1}\n" +
+            "Chapters: {2}\n" +
+            "Volumes: {3}\n" +
+            "Link: http://myanimelist.net/manga/{4}\n" +
             "Synopsis: {5}\n";
 
         public MALmodule(ICredentialContext credential)
@@ -31,15 +44,15 @@ namespace Discord.Bot.Modules
         {
             var message = e.Message;
             var channel = e.Channel;
+            string response;
 
-            if (message.Content.StartsWith(_commandName))
+            if (Search(message.Content, SearchType.Anime, out response))
             {
-                var arg = message.Content.Remove(0, _commandName.Length);
-                var reponse = _search.SearchAnimeDeserialized(arg);
-                
-                if (reponse.Entries.Count != 0)
+                var animes = _animeDeserializer.Deserialize(response);
+
+                if (animes.Entries.Count != 0)
                 {
-                    var anime = reponse.Entries.First();
+                    var anime = animes.Entries.First();
 
                     channel.SendMessage(
                         string.Format(_animeMessage,
@@ -47,10 +60,50 @@ namespace Discord.Bot.Modules
                             anime.English,
                             anime.Episodes,
                             anime.Id,
-                            anime.Image,
                             anime.Synopsis));
                 }
+
+                return;
             }
+
+            if (Search(message.Content, SearchType.Anime, out response))
+            {
+                var mangos = _mangoDeserializer.Deserialize(response);
+
+                if (mangos.Entries.Count != 0)
+                {
+                    var mango = mangos.Entries.First();
+
+                    channel.SendMessage(
+                        string.Format(_mangoMessage,
+                            mango.Title,
+                            mango.English,
+                            mango.Chapters,
+                            mango.Volumes,
+                            mango.Id,
+                            mango.Synopsis));
+                }
+
+                return;
+            }
+        }
+
+        enum SearchType { Mango, Anime }
+        private bool Search(string message, SearchType type, out string response)
+        {
+            if (message.StartsWith(_animeCommand))
+            {
+                var arg = message.Remove(0, _animeCommand.Length).Trim(' ').Replace(' ', '_');
+                response = _search.SearchAnime(arg);
+
+                if (!string.IsNullOrEmpty(response))
+                {
+                    return true;
+                }
+            }
+
+            response = null;
+            return false;
         }
     }
 }

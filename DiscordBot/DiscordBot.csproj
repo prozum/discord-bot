@@ -64,6 +64,7 @@
     <Compile Include="Bot\Interfaces\IMessageModule.cs" />
     <Compile Include="Bot\Modules\AESharpExtensions\DiscordSysFunc.cs" />
     <Compile Include="Bot\Modules\AESharpExtensions\SendMsgFunc.cs" />
+    <Compile Include="Bot\Modules\AnimeGuessModule.cs" />
     <Compile Include="Bot\Modules\MALmodule.cs" />
     <Compile Include="Bot\Modules\TemplateModule.cs" />
     <Compile Include="Program.cs" />
