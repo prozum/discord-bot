@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 using AESharp;
 using Discord.Bot.Modules.AESharpExtensions;
 using Discord.Bot.BaseModules;
@@ -15,7 +11,7 @@ namespace Discord.Bot.Modules
     public class CasNetModule : BaseMessageModule
     {
         static readonly int _cordsize = 21;
-        static readonly string _commandName = "#Æ#";
+        static readonly string _commandName = "#æsharp";
 
         Evaluator evaluator = new Evaluator();
 
@@ -55,7 +51,7 @@ namespace Discord.Bot.Modules
             {
                 if (effect is PlotData)
                 {
-                    output += MakeAsciiPlot(effect as PlotData);
+                    output += "```\n" + MakeAsciiPlot(effect as PlotData) + "\n```";
                 }
             }
 
