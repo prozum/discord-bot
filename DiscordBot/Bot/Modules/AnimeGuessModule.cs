@@ -56,8 +56,9 @@ namespace Discord.Bot.Modules
             "{2} guessed the anime.\n" +
             _anwser;
 
-        static readonly uint _minPlayers = 0;
+        static readonly uint _minPlayers = 2;
         static readonly uint _awaittime = 60;
+        static readonly uint _maxScore = 5;
 
         readonly ICredentialContext _credential;
         readonly SearchMethods _search;
@@ -66,7 +67,7 @@ namespace Discord.Bot.Modules
         GameHint _hint = GameHint.Synopsis;
         bool _awaiting = true;
 
-        HashSet<DiscordMember> _players = new HashSet<DiscordMember>();
+        Dictionary<DiscordMember, uint> _players = new Dictionary<DiscordMember, uint>();
         DiscordMember _choosingPlayer = null;
         AnimeEntry _chosenanime = null;
         string _title = null;
@@ -113,9 +114,32 @@ namespace Discord.Bot.Modules
                     _choosingPlayer = null;
                     _chosenanime = null;
                     _hint = GameHint.Synopsis;
-                    _players.Add(e.Author);
+                    _players.Add(e.Author, 0);
 
-                    Task.Run(() => GameLoop(channel));
+                    Task.Run(() => 
+                    {
+                        channel.SendMessage("Awaiting players!");
+                        _state = GameState.AwaitingPlayers;
+
+                        while (_state == GameState.AwaitingPlayers)
+                        {
+                            Thread.Sleep(1000);
+                        }
+
+                        if (_state == GameState.Idle)
+                        {
+                            return;
+                        }
+
+                        if (_players.Count >= _minPlayers)
+                        {
+                            GameLoop(channel);
+                        }
+                        else
+                        {
+                            channel.SendMessage("Not enough players joined.");
+                        }
+                    });
                 }
             }
         }
@@ -131,9 +155,9 @@ namespace Discord.Bot.Modules
 
                 if (arg == _join)
                 {
-                    if (!_players.Contains(author))
+                    if (!_players.ContainsKey(author))
                     {
-                        _players.Add(author);
+                        _players.Add(author, 0);
                         channel.SendMessage(author.Username + " joined the game!");
                     }
 
@@ -160,9 +184,19 @@ namespace Discord.Bot.Modules
             var channel = e.Channel;
             var message = e.Message.Content.Replace(" ", "").ToLower();
 
-            if (_players.Contains(author) && (_title == message || _engtitle == message))
+            if (author != _choosingPlayer && _players.ContainsKey(author) && (_title == message || _engtitle == message))
             {
+                _players[author]++;
                 channel.SendMessage(string.Format(_win, _chosenanime.Title, _chosenanime.Id, e.Author.Username));
+
+                var msg = "Current Scores:\n";
+
+                foreach (var item in _players)
+                {
+                    msg += item.Key.Username + ": " + item.Value + "\n";
+                }
+
+                channel.SendMessage(msg);
                 _awaiting = false;
             }
         }
@@ -219,23 +253,12 @@ namespace Discord.Bot.Modules
 
         private void GameLoop(DiscordChannel channel)
         {
-            channel.SendMessage("Awaiting players!");
-            _state = GameState.AwaitingPlayers;
+            DiscordMember winner;
 
-            while (_state == GameState.AwaitingPlayers)
-            {
-                Thread.Sleep(1000);
-            }
-
-            if (_state == GameState.Idle)
-            {
-                return;
-            }
-
-            if (_players.Count >= _minPlayers)
+            while (!IsDone(out winner))
             {
                 int chosen = _randomizer.Next(_players.Count);
-                _choosingPlayer = _players.ElementAt(chosen);
+                _choosingPlayer = _players.ElementAt(chosen).Key;
 
                 _choosingPlayer.SendMessage(_helpChooser);
                 channel.SendMessage(_choosingPlayer.Username + " is choosing an anime.");
@@ -248,23 +271,28 @@ namespace Discord.Bot.Modules
                     switch (_hint)
                     {
                         case GameHint.Synopsis:
-                            channel.SendMessage(
-                                "Anime has been chosen.\n" +
-                                "Synopsis:\n" +
-                                _chosenanime.Synopsis.Replace("<br />", "")
+                            var msg = _chosenanime.Synopsis.Replace("<br />", "")
                                                      .Replace("&#039;", "'")
                                                      .Replace("[/i]", "")
                                                      .Replace("[i]", "")
                                                      .Replace("&quot;", "\"")
-                                                     .Replace("&mdash;", "-")
-                                                     .Replace(_chosenanime.Title, "****")
-                                                     .Replace(_chosenanime.English, "****")
-                                                     .Remove(100) + "...");
+                                                     .Replace("&mdash;", "-");
+
+                            if (!string.IsNullOrEmpty(_chosenanime.Title))
+                                msg = msg.Replace(_chosenanime.Title, "****");
+
+                            if (!string.IsNullOrEmpty(_chosenanime.English))
+                                msg = msg.Replace(_chosenanime.English, "****");
+
+                            channel.SendMessage(
+                                "Anime has been chosen.\n" +
+                                "Synopsis:\n" +
+                                msg.Remove(200) + "...");
                             break;
                         case GameHint.Image:
                             channel.SendMessage(
                                 "Anime has been chosen.\n" +
-                                "Image:\n" + 
+                                "Image:\n" +
                                 _chosenanime.Image);
                             break;
                         default:
@@ -284,12 +312,25 @@ namespace Discord.Bot.Modules
                     channel.SendMessage("Anime wasn't chosen.");
                 }
             }
-            else
+            
+            channel.SendMessage(winner.Username + " won the game!");
+            _state = GameState.Idle;
+        }
+
+        private bool IsDone(out DiscordMember winner)
+        {
+            winner = null;
+
+            foreach (var item in _players)
             {
-                channel.SendMessage("Not enough players joined.");
+                if (item.Value >= _maxScore)
+                {
+                    winner = item.Key;
+                    return true;
+                }
             }
 
-            _state = GameState.Idle;
+            return false;
         }
 
         private void Await(uint seconds, Action<string> send)
