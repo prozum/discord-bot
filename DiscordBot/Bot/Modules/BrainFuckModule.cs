@@ -13,7 +13,7 @@ namespace Discord.Bot.Modules
 {
     public class BrainFuckModule : BaseMessageModule
     {
-        static readonly string _commandName = "#bfuck";
+        static readonly string _commandName = "#bfuck ";
 
         public override void MessageReceived(object sender, DiscordMessageEventArgs e)
         {

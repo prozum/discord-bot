@@ -14,11 +14,9 @@ namespace Discord.Bot.Modules
     {
         readonly ICredentialContext _credential;
         readonly SearchMethods _search;
-        readonly SearchResponseDeserializer<AnimeSearchResponse> _animeDeserializer = new SearchResponseDeserializer<AnimeSearchResponse>();
-        readonly SearchResponseDeserializer<MangaSearchResponse> _mangoDeserializer = new SearchResponseDeserializer<MangaSearchResponse>();
 
-        static readonly string _animeCommand = "#anime";
-        static readonly string _mangoCommand = "#mango";
+        static readonly string _animeCommand = "#anime ";
+        static readonly string _mangoCommand = "#mango ";
         static readonly string _animeMessage =
             "Title: {0}\n" +
             "English Title: {1}\n" +
@@ -44,16 +42,9 @@ namespace Discord.Bot.Modules
         {
             var message = e.Message;
             var channel = e.Channel;
-            string response;
 
-            if (Search(message.Content, SearchType.Anime, out response))
-            {
-                var animes = _animeDeserializer.Deserialize(response);
-
-                if (animes.Entries.Count != 0)
+            if (TrySearchAndSend<AnimeEntry, AnimeSearchResponse>(message.Content, _animeCommand, anime =>
                 {
-                    var anime = animes.Entries.First();
-
                     channel.SendMessage(
                         string.Format(_animeMessage,
                             anime.Title,
@@ -61,19 +52,13 @@ namespace Discord.Bot.Modules
                             anime.Episodes,
                             anime.Id,
                             anime.Synopsis));
-                }
-
+                }))
+            {
                 return;
             }
 
-            if (Search(message.Content, SearchType.Anime, out response))
-            {
-                var mangos = _mangoDeserializer.Deserialize(response);
-
-                if (mangos.Entries.Count != 0)
+            if (TrySearchAndSend<MangaEntry, MangaSearchResponse>(message.Content, _mangoCommand, mango =>
                 {
-                    var mango = mangos.Entries.First();
-
                     channel.SendMessage(
                         string.Format(_mangoMessage,
                             mango.Title,
@@ -82,28 +67,66 @@ namespace Discord.Bot.Modules
                             mango.Volumes,
                             mango.Id,
                             mango.Synopsis));
-                }
-
+                }))
+            {
                 return;
             }
         }
 
-        enum SearchType { Mango, Anime }
-        private bool Search(string message, SearchType type, out string response)
+        private bool TrySearchAndSend<T, U>(string message, string command, Action<T> sender) where T : EntryBase where U : class, ISearchResponse<T>
         {
-            if (message.StartsWith(_animeCommand))
+            if (message.StartsWith(command))
             {
-                var arg = message.Remove(0, _animeCommand.Length).Trim(' ').Replace(' ', '_');
-                response = _search.SearchAnime(arg);
+                var arg = message.Remove(0, command.Length).Trim(' ').Replace(' ', '_');
+                var response = _search.SearchAnime(arg);
 
                 if (!string.IsNullOrEmpty(response))
                 {
+                    var entries = new SearchResponseDeserializer<U>().Deserialize(response).Entries;
+
+                    if (entries.Count == 1)
+                    {
+                        sender(entries.First());
+                    }
+                    else if (entries.Count > 1)
+                    {
+                        arg = new string(arg.ToLower().SkipWhile(chr => chr == ' ').ToArray());
+
+                        if (!TrySend<T>(arg, entries, sender, en => en.Title, (s1, s2) => s1 != s2))
+                        {
+                            if (!TrySend<T>(arg, entries, sender, en => en.English, (s1, s2) => s1 != s2))
+                            {
+                                if (!TrySend<T>(arg, entries, sender, en => en.Synonyms, (s1, s2) => !s1.Contains(s2)))
+                                {
+                                    sender(entries.First());
+                                }
+                            }
+                        }
+                    }
+
                     return true;
                 }
             }
-
-            response = null;
+            
             return false;
         }
+
+        private bool TrySend<T>(string name, List<T> entries, Action<T> sender, Func<T, string> comparewith, Func<string, string, bool> comparer) where T : EntryBase
+        {
+            var found = entries.SkipWhile(en =>
+            {
+                var title = new string(comparewith(en).ToLower().SkipWhile(chr => chr == ' ').ToArray());
+                return comparer(title, name);
+            });
+
+            if (found.Count() > 0)
+            {
+                sender(found.First());
+                return true;
+            }
+
+            return false;
+        }
+        
     }
 }

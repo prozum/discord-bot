@@ -11,7 +11,7 @@ namespace Discord.Bot.Modules
     public class CasNetModule : BaseMessageModule
     {
         static readonly int _cordsize = 21;
-        static readonly string _commandName = "#æsharp";
+        static readonly string _commandName = "#æsharp ";
 
         Evaluator evaluator = new Evaluator();
 
