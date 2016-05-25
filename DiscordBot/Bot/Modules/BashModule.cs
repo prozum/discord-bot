@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Discord.Bot.BaseModules;
 using DiscordSharp.Events;
-using DiscordSharp;
 using DiscordSharp.Objects;
 
 namespace Discord.Bot.Modules

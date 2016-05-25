@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using DiscordSharp.Events;
 using System.Threading;
@@ -12,7 +11,6 @@ using MyAnimeListSharp.Core;
 using MyAnimeListSharp.Auth;
 using MyAnimeListSharp.Facade;
 using MyAnimeListSharp.Util;
-using System.Text.RegularExpressions;
 
 namespace Discord.Bot.Modules
 {

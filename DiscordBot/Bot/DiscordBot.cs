@@ -1,6 +1,4 @@
-﻿using Discord.Bot.Modules;
-using System.Collections.Generic;
-using DiscordSharp;
+﻿using DiscordSharp;
 using Discord.Bot.Interfaces;
 using System;
 
