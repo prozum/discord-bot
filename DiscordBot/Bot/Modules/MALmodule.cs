@@ -13,7 +13,7 @@ namespace Discord.Bot.Modules
     public class MALmodule : BaseMessageModule
     {
         readonly SearchMethods _search;
-
+        
         const string _animeCommand = "#anime ";
         const string _mangoCommand = "#mango ";
         const string _animeMessage =
@@ -69,8 +69,8 @@ namespace Discord.Bot.Modules
             if (!message.StartsWith(command))
                 return false;
 
-            var arg = message.Remove(0, command.Length).Trim(' ').Replace(' ', '_');
-            var response = _search.SearchAnime(arg);
+            var arg = message.Remove(0, command.Length).Trim(' ');
+            var response = _search.SearchAnime(arg.Replace(' ', '+'));
 
             if (string.IsNullOrEmpty(response))
                 return false;
