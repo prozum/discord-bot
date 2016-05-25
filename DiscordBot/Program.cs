@@ -22,6 +22,9 @@ namespace Discord
             bot.AddModule(new CasNetModule());
 			bot.AddModule(new BashModule());
             bot.AddModule(new TemplateModule());
+            bot.AddModule(new AnilistModule(
+                ConfigurationManager.AppSettings.Get("AniListClientID"),
+                ConfigurationManager.AppSettings.Get("AniListClientSecret")));
             bot.AddModule(new AnimeGuessModule(credential));
             bot.AddModule(new MALmodule(credential));
 

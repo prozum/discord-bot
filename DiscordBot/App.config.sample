@@ -4,5 +4,7 @@
     <add key="BotToken" value=""/>
     <add key="MALUserName" value=""/>
     <add key="MALPassword" value=""/>
+    <add key="AniListClientID" value=""/>
+    <add key="AniListClientSecret" value=""/>
   </appSettings>
 </configuration>
