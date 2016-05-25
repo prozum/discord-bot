@@ -52,12 +52,8 @@ namespace Discord.Bot.Modules
                             anime.Episodes,
                             anime.Id,
                             anime.Synopsis));
-                }))
-            {
-                return;
-            }
-
-            if (TrySearchAndSend<MangaEntry, MangaSearchResponse>(message.Content, _mangoCommand, mango =>
+                })) { }
+            else if (TrySearchAndSend<MangaEntry, MangaSearchResponse>(message.Content, _mangoCommand, mango =>
                 {
                     channel.SendMessage(
                         string.Format(_mangoMessage,
@@ -67,10 +63,7 @@ namespace Discord.Bot.Modules
                             mango.Volumes,
                             mango.Id,
                             mango.Synopsis));
-                }))
-            {
-                return;
-            }
+                })) { }
         }
 
         private bool TrySearchAndSend<T, U>(string message, string command, Action<T> sender) where T : EntryBase where U : class, ISearchResponse<T>

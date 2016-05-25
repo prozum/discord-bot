@@ -12,6 +12,7 @@ using MyAnimeListSharp.Core;
 using MyAnimeListSharp.Auth;
 using MyAnimeListSharp.Facade;
 using MyAnimeListSharp.Util;
+using System.Text.RegularExpressions;
 
 namespace Discord.Bot.Modules
 {
@@ -20,19 +21,29 @@ namespace Discord.Bot.Modules
         enum GameState { Idle, AwaitingPlayers, AwaitingAnime, Playing }
         enum GameHint { Synopsis, Image }
 
-        static readonly string _commandName = "#guessgame ";
-        static readonly string _choose = "#choose ";
-        static readonly string _host = "host";
-        static readonly string _start = "start";
-        static readonly string _stop = "stop";
-        static readonly string _join = "join";
+        const string _commandName = "#guess ";
+        const string _help = "help";
+        const string _host = "host";
+        const string _start = "start";
+        const string _join = "join";
+        const string _stop = "stop";
+        const string _pass = "pass";
 
-        static readonly string _helpChooser =
+        const string _helpStr =
+            "#guess \"command\"\n" +
+            "\thelp     Get help\n" +
+            "\thost     Host a game\n" +
+            "\tstart    Start your hosted game\n" +
+            "\tjoin     Join a hosted game\n" +
+            "\tstop     Stop your hosted game\n" +
+            "\tpass     Pass your guess\n";
+
+        const string _helpChooser =
             "You have been chosen to pick an anime.\n" +
             "To choose an anime first just write the name to me.\n" +
-            "Then, use the #choose command to pick correct anime from the list i provide you.\n" +
+            "Then, pick correct anime from the list i provide you.\n" +
             "Example:\n" + 
-            "You: n" + 
+            "You:\n" + 
             "Clannad\n\n" +
             "Bot:\n" + 
             "---0---\n" +
@@ -40,231 +51,268 @@ namespace Discord.Bot.Modules
             "---1---\n" +
             "Title: Clannad\n\n" +
             "You:\n" + 
-            "#choose 1\n\n" +
+            "1\n\n" +
             "Bot:\n" + 
             "You have chosen Clannad";
 
-        static readonly string _anwser =
+        const string _anwser =
             "Answer: {0}\n" +
             "http://myanimelist.net/anime/{1}";
 
-        static readonly string _lost = 
+        const string _lost = 
             "No one guessed the anime.\n" +
             _anwser;
 
-        static readonly string _win =
+        const string _win =
             "{2} guessed the anime.\n" +
-            _anwser;
+            _anwser + "\n\n" +
+            "Current Scores:\n";
 
-        static readonly uint _minPlayers = 2;
-        static readonly uint _awaittime = 60;
-        static readonly uint _maxScore = 5;
+        const string _suggest =
+            "---{0}---\n" +
+            "Title: {1}\n" +
+            "English Title: {2}\n\n";
 
-        readonly ICredentialContext _credential;
+        const bool _hostCanGuess = false;
+        const uint _minPlayers = 2;
+        const uint _awaittime = 60;
+        const uint _maxScore = 5;
+
+        readonly Dictionary<DiscordMember, uint> _players = new Dictionary<DiscordMember, uint>();
+        readonly HashSet<DiscordMember> _haspassed = new HashSet<DiscordMember>();
+        readonly Random _randomizer = new Random();
         readonly SearchMethods _search;
 
         GameState _state = GameState.Idle;
         GameHint _hint = GameHint.Synopsis;
         bool _awaiting = true;
 
-        Dictionary<DiscordMember, uint> _players = new Dictionary<DiscordMember, uint>();
-        DiscordMember _choosingPlayer = null;
-        AnimeEntry _chosenanime = null;
-        string _title = null;
-        string _engtitle = null;
+        DiscordMember _choosingPlayer;
+        DiscordMember _hostingPlayer;
+        AnimeEntry _chosenanime;
+        string _title;
+        string _engtitle;
 
-        Random _randomizer = new Random();
 
         public AnimeGuessModule(ICredentialContext credential)
         {
-            _credential = credential;
-            _search = new SearchMethods(_credential);
+            _search = new SearchMethods(credential);
         }
 
         public override void MessageReceived(object sender, DiscordMessageEventArgs e)
         {
-            switch (_state)
-            {
-                case GameState.Idle:
-                    MessageReceivedIdle(e);
-                    break;
-                case GameState.AwaitingPlayers:
-                    MessageReceivedAwaitingPlayers(e);
-                    break;
-                case GameState.Playing:
-                    MessageReceivedPlaying(e);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private void MessageReceivedIdle(DiscordMessageEventArgs e)
-        {
-            var message = e.Message.Content;
+            var author = e.Author;
             var channel = e.Channel;
+            var message = e.MessageText;
 
             if (message.StartsWith(_commandName))
             {
-                var arg = message.Remove(0, _commandName.Length).Trim(' ');
+                var arg = e.MessageText.Remove(0, _commandName.Length).Trim(' ');
 
-                if (arg == _host)
+                switch (arg)
                 {
-                    _players.Clear();
-                    _choosingPlayer = null;
-                    _chosenanime = null;
-                    _hint = GameHint.Synopsis;
-                    _players.Add(e.Author, 0);
-
-                    Task.Run(() => 
-                    {
-                        channel.SendMessage("Awaiting players!");
-                        _state = GameState.AwaitingPlayers;
-
-                        while (_state == GameState.AwaitingPlayers)
-                        {
-                            Thread.Sleep(1000);
-                        }
-
-                        if (_state == GameState.Idle)
-                        {
-                            return;
-                        }
-
-                        if (_players.Count >= _minPlayers)
-                        {
-                            GameLoop(channel);
-                        }
-                        else
-                        {
-                            channel.SendMessage("Not enough players joined.");
-                        }
-                    });
+                    case _join:
+                        JoinGameCommand(channel, author);
+                        break;
+                    case _help:
+                        HelpCommand(channel);
+                        break;
+                    case _stop:
+                        StopGameCommand(channel, author);
+                        break;
+                    case _host:
+                        HostGameCommand(channel, author);
+                        break;
+                    case _start:
+                        StartGameCommand(author);
+                        break;
+                    case _pass:
+                        PassCommand(author, channel);
+                        break;
                 }
             }
-        }
-        private void MessageReceivedAwaitingPlayers(DiscordMessageEventArgs e)
-        {
-            var message = e.Message.Content;
-            var channel = e.Channel;
-            var author = e.Author;
-
-            if (message.StartsWith(_commandName))
+            else
             {
-                var arg = message.Remove(0, _commandName.Length).Trim(' ');
-
-                if (arg == _join)
-                {
-                    if (!_players.ContainsKey(author))
-                    {
-                        _players.Add(author, 0);
-                        channel.SendMessage(author.Username + " joined the game!");
-                    }
-
-                    return;
-                }
-
-                if (arg == _start)
-                {
-                    _state = GameState.Playing;
-                    return;
-                }
-
-                if (arg == _stop)
-                {
-                    _state = GameState.Idle;
-                    return;
-                }
+                GuessAnime(channel, author, message);
             }
         }
 
-        private void MessageReceivedPlaying(DiscordMessageEventArgs e)
+        void PassCommand(DiscordMember author, DiscordChannel channel)
         {
-            var author = e.Author;
-            var channel = e.Channel;
-            var message = e.Message.Content.Replace(" ", "").ToLower();
+            if (_haspassed.Contains(author))
+                return;
 
-            if (author != _choosingPlayer && _players.ContainsKey(author) && (_title == message || _engtitle == message))
+            var msg = string.Format(author.Username + " passes this turn, and can't guess anymore.");
+
+            _haspassed.Add(author);
+
+            if (_players.All(item => item.Key == _choosingPlayer || 
+                             _haspassed.Contains(item.Key)))
             {
-                _players[author]++;
-                channel.SendMessage(string.Format(_win, _chosenanime.Title, _chosenanime.Id, e.Author.Username));
-
-                var msg = "Current Scores:\n";
-
-                foreach (var item in _players)
-                {
-                    msg += item.Key.Username + ": " + item.Value + "\n";
-                }
-
-                channel.SendMessage(msg);
+                msg += "\n\n" + string.Format(_lost, _chosenanime.Title, _chosenanime.Id);
                 _awaiting = false;
             }
+
+            channel.SendMessage(msg);
         }
 
-        List<AnimeEntry> _tempEntries = null;
+        void GuessAnime(DiscordChannel channel, DiscordMember author, string message)
+        {
+            if (!_hostCanGuess)
+            {
+                if (author == _choosingPlayer || !_players.ContainsKey(author))
+                    return;
+            }
+            
+            // filter out big letters, space and special characters
+            var strippedmsg = string.Join("", 
+                message.ToLower().Where(c => (c >= 'a' && c <= 'z') || char.IsDigit(c)));
+
+            if ((string.IsNullOrEmpty(_title) || _title != strippedmsg) &&
+                (string.IsNullOrEmpty(_engtitle) || _engtitle != strippedmsg))
+                return;
+
+            _players[author]++;
+
+            var sendmsg = string.Format(_win, _chosenanime.Title, _chosenanime.Id, author.Username);
+
+            sendmsg += _players.Aggregate(sendmsg, (s, i) => i.Key.Username + ": " + i.Value + "\n");
+
+            channel.SendMessage(sendmsg);
+            _awaiting = false;
+        }
+
+        void StartGameCommand(DiscordMember author)
+        {
+            if (_state == GameState.AwaitingPlayers && author == _hostingPlayer)
+                _state = GameState.Playing;
+        }
+
+        void HostGameCommand(DiscordChannel channel, DiscordMember author)
+        {
+            if (_state != GameState.Idle)
+                return;
+
+            _players.Clear();
+            _choosingPlayer = null;
+            _chosenanime = null;
+            _hint = GameHint.Synopsis;
+            _players.Add(author, 0);
+            _hostingPlayer = author;
+
+            Task.Run(() =>
+            {
+                channel.SendMessage("Awaiting players!");
+                _state = GameState.AwaitingPlayers;
+
+                while (_state == GameState.AwaitingPlayers)
+                    Thread.Sleep(1000);
+
+                if (_players.Count >= _minPlayers)
+                    GameLoop(channel);
+                else
+                    channel.SendMessage("Not enough players joined.");
+            });
+        }
+
+        void StopGameCommand(DiscordChannel channel, DiscordMember author)
+        {
+            if (_state == GameState.Idle || author != _hostingPlayer)
+                return;
+
+            _state = GameState.Idle;
+            _awaiting = false;
+            channel.SendMessage("Game was stopped by host.");
+        }
+
+        void HelpCommand(DiscordChannel channel)
+        {
+            channel.SendMessage(_helpStr);
+        }
+
+        void JoinGameCommand(DiscordChannel channel, DiscordMember author)
+        {
+            if (_state == GameState.Idle || _players.ContainsKey(author))
+                return;
+
+            _players.Add(author, 0);
+            channel.SendMessage(author.Username + " joined the game!");
+        }
+
+        List<AnimeEntry> _tempEntries;
         public override void PrivateMessageReceived(object sender, DiscordPrivateMessageEventArgs e)
         {
             var member = e.Author;
 
             // Only accept messages from the choosing player
-            if (_state == GameState.AwaitingAnime && member == _choosingPlayer)
+            if (_state != GameState.AwaitingAnime || member != _choosingPlayer)
+                return;
+            var message = e.Message.Trim(' ');
+            int choice;
+
+            // If bot receives a parseable number, assume they're trying to choose an anime
+            if (int.TryParse(message, out choice))
             {
-                var message = e.Message;
-
-                if (message.StartsWith(_choose))
-                {
-                    var arg = message.Remove(0, _choose.Length).Trim(' ');
-                    int choice;
-                            
-                    if (_tempEntries != null && int.TryParse(arg, out choice) && choice < _tempEntries.Count)
-                    {
-                        _awaiting = false;
-                        _chosenanime = _tempEntries[choice];
-                        _title = _chosenanime.Title.Replace(" ", "").ToLower();
-                        _engtitle = _chosenanime.English.Replace(" ", "").ToLower();
-                        member.SendMessage("You have chosen " + _chosenanime.Title);
-                    }
-
+                // The choice was not valid, so return
+                if (_tempEntries == null || choice >= _tempEntries.Count)
                     return;
-                }
 
-                var response = _search.SearchAnime(message.Trim(' ').Replace(' ', '_'));
+                _awaiting = false;
+                _chosenanime = _tempEntries[choice];
 
-                if (!string.IsNullOrEmpty(response))
+                var title = _chosenanime.Title;
+                var engtitle = _chosenanime.English;
+
+                // filter out big letters, space and special characters
+                _title = string.Join("", title.ToLower().Where(c => (c >= 'a' && c <= 'z') || char.IsDigit(c)));
+                _engtitle = string.Join("", engtitle.ToLower().Where(c => (c >= 'a' && c <= 'z') || char.IsDigit(c)));
+                member.SendMessage("You have chosen " + _chosenanime.Title);
+
+                return;
+            }
+
+            var response = _search.SearchAnime(message.Replace(' ', '_'));
+
+            if (!string.IsNullOrEmpty(response))
+            {
+                var suggests = "";
+                _tempEntries = new SearchResponseDeserializer<AnimeSearchResponse>().Deserialize(response).Entries;
+
+                // Provide the chooser options of what anime he wants the others to guess
+                for (var i = 0; i < _tempEntries.Count; i++)
                 {
-                    var suggests = "";
-                    _tempEntries = new SearchResponseDeserializer<AnimeSearchResponse>().Deserialize(response).Entries;
-
-                    // Provide the chooser options of what anime he wants the others to guess
-                    for (int i = 0; i < _tempEntries.Count; i++)
-                    {
-                        suggests += string.Format("---" + i + "---\nTitle: {0}\n\n", _tempEntries[i].Title);
-                    }
-
-                    member.SendMessage(suggests);
+                    suggests += string.Format(_suggest, i, _tempEntries[i].Title, _tempEntries[i].English);
                 }
-                else
-                {
-                    member.SendMessage("Couldn't find any anime of the name " + message);
-                    _tempEntries = null;
-                }
+
+                member.SendMessage(suggests);
+            }
+            else
+            {
+                member.SendMessage("Couldn't find any anime of the name " + message);
+                _tempEntries = null;
             }
         }
 
-        private void GameLoop(DiscordChannel channel)
+        void GameLoop(DiscordChannel channel)
         {
             DiscordMember winner;
 
             while (!IsDone(out winner))
             {
-                int chosen = _randomizer.Next(_players.Count);
+                var chosen = _randomizer.Next(_players.Count);
+                _haspassed.Clear();
+                _chosenanime = null;
                 _choosingPlayer = _players.ElementAt(chosen).Key;
 
                 _choosingPlayer.SendMessage(_helpChooser);
+                Thread.Sleep(100);
                 channel.SendMessage(_choosingPlayer.Username + " is choosing an anime.");
 
                 _state = GameState.AwaitingAnime;
-                Await(_awaittime, str => { channel.SendMessage(str); _choosingPlayer.SendMessage(str); });
+                Await(_awaittime, str => { channel.SendMessage(str); Thread.Sleep(100); _choosingPlayer.SendMessage(str); });
+
+                if (_state == GameState.Idle)
+                    return;
 
                 if (_chosenanime != null)
                 {
@@ -303,9 +351,7 @@ namespace Discord.Bot.Modules
                     Await(_awaittime, str => channel.SendMessage(str));
 
                     if (_awaiting)
-                    {
                         channel.SendMessage(string.Format(_lost, _chosenanime.Title, _chosenanime.Id));
-                    }
                 }
                 else
                 {
@@ -317,45 +363,40 @@ namespace Discord.Bot.Modules
             _state = GameState.Idle;
         }
 
-        private bool IsDone(out DiscordMember winner)
+        bool IsDone(out DiscordMember winner)
         {
             winner = null;
 
             foreach (var item in _players)
             {
-                if (item.Value >= _maxScore)
-                {
-                    winner = item.Key;
-                    return true;
-                }
+                if (item.Value < _maxScore)
+                    continue;
+
+                winner = item.Key;
+                return true;
             }
 
             return false;
         }
 
-        private void Await(uint seconds, Action<string> send)
+        void Await(uint seconds, Action<string> send)
         {
+            const int last = 5;
             var time = seconds;
             var half = seconds / 2;
-            var last = 5;
+
             _awaiting = true;
 
             while (_awaiting)
             {
                 if (time == 0)
-                {
                     break;
-                }
-
+                
                 if (time == half)
-                {
                     send(time + " seconds remaining!");
-                }
 
-                if (time <= last)
-                {
-                    send(time.ToString());
-                }
+                if (time == last)
+                    send(time + " seconds remaining!");
 
                 Thread.Sleep(1000);
                 time -= 1;

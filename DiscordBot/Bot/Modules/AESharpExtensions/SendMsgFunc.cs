@@ -11,7 +11,8 @@ namespace Discord.Bot.Modules.AESharpExtensions
 {
     public class SendMsgFunc : DiscordSysFunc
     {
-        public SendMsgFunc(Scope scope, DiscordChannel channel) : base("sendmsg", scope, channel)
+        public SendMsgFunc(Scope scope, DiscordChannel channel) 
+            : base("sendmsg", scope, channel)
         {
             ValidArguments = new List<ArgumentType>()
             {

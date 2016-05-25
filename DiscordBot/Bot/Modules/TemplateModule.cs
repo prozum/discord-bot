@@ -11,7 +11,7 @@ namespace Discord.Bot.Modules
     public class TemplateModule : BaseMessageModule
     {
         // This is the command name that the module will be looking for
-        static readonly string _commandName = "#hello ";
+        const string _commandName = "#hello ";
 
         public override void MessageReceived(object sender, DiscordMessageEventArgs e)
         {

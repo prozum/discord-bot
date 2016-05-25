@@ -10,10 +10,10 @@ namespace Discord.Bot.Modules
 {
     public class CasNetModule : BaseMessageModule
     {
-        static readonly int _cordsize = 21;
-        static readonly string _commandName = "#æsharp ";
+        const int _cordSize = 21;
+        const string _commandName = "#æsharp ";
 
-        Evaluator evaluator = new Evaluator();
+        readonly Evaluator _evaluator = new Evaluator();
 
         public override void MessageReceived(object sender, DiscordMessageEventArgs e)
         {
@@ -23,9 +23,7 @@ namespace Discord.Bot.Modules
             try
             {
                 if (message.Content.StartsWith(_commandName))
-                {
-                    Interpret(message.Content.Remove(0, _commandName.Count()), channel);
-                }
+                    Interpret(message.Content.Remove(0, _commandName.Length), channel);
             }
             catch (Exception ex)
             {
@@ -35,52 +33,50 @@ namespace Discord.Bot.Modules
 
         private void Interpret(string str, DiscordChannel channel)
         {
-            string output = "";
+            var output = "";
             Expression res;
 
-            var scope = new Scope(evaluator);
-            evaluator.SetVar("discord", scope);
+            var scope = new Scope(_evaluator);
+            _evaluator.SetVar("discord", scope);
             scope.SetVar("sendmsg", new SendMsgFunc(scope, channel));
 
-            evaluator.Parse(str);
+            _evaluator.Parse(str);
 
-            if ((res = evaluator.Evaluate()) is AESharp.Error)
-                output += "Error!: " + res.ToString() + "\n";
-
-            foreach (var effect in evaluator.SideEffects)
+            if ((res = _evaluator.Evaluate()) is Error)
+                output += "Error!: " + res + "\n";
+           
+            foreach (var effect in _evaluator.SideEffects.OfType<PlotData>())
             {
-                if (effect is PlotData)
-                {
-                    output += "```\n" + MakeAsciiPlot(effect as PlotData) + "\n```";
-                }
+                output += "```\n" + MakeAsciiPlot(effect) + "\n```";
             }
 
             channel.SendMessage(output);
         }
 
-        private string MakeAsciiPlot(PlotData effect)
+        static string MakeAsciiPlot(PlotData effect)
         {
-            string res = "";
+            var res = "";
 
-            for (int y = 0; y < _cordsize; y++)
+            for (var y = 0; y < _cordSize; y++)
             {
-                for (int x = 0; x < _cordsize; x++)
+                for (var x = 0; x < _cordSize; x++)
                 {
-                    if (y - _cordsize / 2 == 0 || x - _cordsize / 2 == 0)
+                    if (y - _cordSize / 2 == 0 || x - _cordSize / 2 == 0)
                     {
                         res += " . ";
                     }
                     else
                     {
-                        bool notfound = true;
-                        for (int i = 0; i < effect.x.Count; i++)
+                        var notfound = true;
+                        for (var i = 0; i < effect.x.Count; i++)
                         {
-                            if (((int)effect.x[i].@decimal == x - _cordsize / 2 && (int)effect.y[i].@decimal == ((_cordsize - 1) - y) - _cordsize / 2))
-                            {
-                                res += " . ";
-                                notfound = false;
-                                break;
-                            }
+                            if ((int) effect.x[i].@decimal != x - _cordSize/2 ||
+                                (int) effect.y[i].@decimal != _cordSize - 1 - y - _cordSize/2)
+                                continue;
+
+                            res += " . ";
+                            notfound = false;
+                            break;
                         }
 
                         if (notfound)

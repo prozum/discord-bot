@@ -12,7 +12,8 @@ namespace Discord.Bot.Modules.AESharpExtensions
     {
         public DiscordChannel Channel { get; set; }
 
-        public DiscordSysFunc(string name, Scope scope, DiscordChannel channel) : base(name, scope)
+        protected DiscordSysFunc(string name, Scope scope, DiscordChannel channel) 
+            : base(name, scope)
         {
             Channel = channel;
         }

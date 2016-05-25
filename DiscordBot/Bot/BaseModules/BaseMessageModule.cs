@@ -32,7 +32,7 @@ namespace Discord.Bot.BaseModules
         public virtual void UnknownMessageTypeReceived(object sender, UnknownMessageEventArgs e)
         { }
 
-        public virtual void URLMessageAutoUpdate(object sender, DiscordURLUpdateEventArgs e)
+        public virtual void UrlMessageAutoUpdate(object sender, DiscordURLUpdateEventArgs e)
         { }
     }
 }

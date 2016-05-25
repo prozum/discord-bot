@@ -8,7 +8,7 @@ namespace Discord.Bot
 {
     public class DiscordBot
     {
-        DiscordClient _client;
+        readonly DiscordClient _client;
 
         public DiscordBot(string token)
         {
@@ -42,7 +42,7 @@ namespace Discord.Bot
             _client.PrivateMessageDeleted       += module.PrivateMessageDeleted;
             _client.PrivateMessageReceived      += module.PrivateMessageReceived;
             _client.UnknownMessageTypeReceived  += module.UnknownMessageTypeReceived;
-            _client.URLMessageAutoUpdate        += module.URLMessageAutoUpdate;
+            _client.URLMessageAutoUpdate        += module.UrlMessageAutoUpdate;
         }
 
         public void AddModule(IImplementsEverything module)
@@ -74,7 +74,7 @@ namespace Discord.Bot
             _client.SocketClosed                    += module.SocketClosed;
             _client.SocketOpened                    += module.SocketOpened;
             _client.UnknownMessageTypeReceived      += module.UnknownMessageTypeReceived;
-            _client.URLMessageAutoUpdate            += module.URLMessageAutoUpdate;
+            _client.URLMessageAutoUpdate            += module.UrlMessageAutoUpdate;
             _client.UserAddedToServer               += module.UserAddedToServer;
             _client.UserLeftVoiceChannel            += module.UserLeftVoiceChannel;
             _client.UserRemovedFromServer           += module.UserRemovedFromServer;

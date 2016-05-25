@@ -9,7 +9,7 @@ namespace Discord.Bot.Interfaces
 {
     public interface IMessageModule
     {
-        void URLMessageAutoUpdate(object sender, DiscordURLUpdateEventArgs e);
+        void UrlMessageAutoUpdate(object sender, DiscordURLUpdateEventArgs e);
 
         void UnknownMessageTypeReceived(object sender, DiscordSharp.Events.UnknownMessageEventArgs e);
 

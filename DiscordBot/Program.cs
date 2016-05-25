@@ -12,7 +12,7 @@ namespace Discord
         static void Main(string[] args)
         {
             var bot = new DiscordBot(ConfigurationManager.AppSettings.Get("BotToken"));
-            var credential = new CredentialContext()
+            var credential = new CredentialContext
             {
                 UserName = ConfigurationManager.AppSettings.Get("MALUserName"),
                 Password = ConfigurationManager.AppSettings.Get("MALPassword")

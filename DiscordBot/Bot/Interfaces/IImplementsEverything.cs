@@ -25,7 +25,7 @@ namespace Discord.Bot.Interfaces
 
         void UserAddedToServer(object sender, DiscordSharp.Events.DiscordGuildMemberAddEventArgs e);
 
-        void URLMessageAutoUpdate(object sender, DiscordURLUpdateEventArgs e);
+        void UrlMessageAutoUpdate(object sender, DiscordURLUpdateEventArgs e);
 
         void UnknownMessageTypeReceived(object sender, DiscordSharp.Events.UnknownMessageEventArgs e);
 
