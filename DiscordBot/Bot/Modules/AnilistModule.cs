@@ -5,7 +5,6 @@ using Discord.Bot.BaseModules;
 using DiscordSharp.Events;
 using DiscordSharp.Objects;
 using UnofficialAniListApiSharp.Api;
-using UnofficialAniListApiSharp.Api.Big;
 using UnofficialAniListApiSharp.Api.Data;
 
 namespace Discord.Bot.Modules
