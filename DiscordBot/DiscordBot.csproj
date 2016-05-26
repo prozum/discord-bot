@@ -69,6 +69,7 @@
     <Compile Include="Bot\Modules\AnimeGuessModule.cs" />
     <Compile Include="Bot\Modules\MALmodule.cs" />
     <Compile Include="Bot\Modules\TemplateModule.cs" />
+    <Compile Include="Bot\Modules\WallpaperModule.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Bot\DiscordBot.cs" />
     <Compile Include="Bot\Modules\BrainFuckModule.cs" />

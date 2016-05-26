@@ -6,5 +6,6 @@
     <add key="MALPassword" value=""/>
     <add key="AniListClientID" value=""/>
     <add key="AniListClientSecret" value=""/>
+    <add key="WallpaperFolder" value =""/>
   </appSettings>
 </configuration>

@@ -1,5 +1,4 @@
-﻿
-using Discord.Bot;
+﻿using Discord.Bot;
 using Discord.Bot.Modules;
 using MyAnimeListSharp.Auth;
 using System;
@@ -27,6 +26,7 @@ namespace Discord
                 ConfigurationManager.AppSettings.Get("AniListClientSecret")));
             bot.AddModule(new AnimeGuessModule(credential));
             bot.AddModule(new MALmodule(credential));
+            bot.AddModule(new WallpaperModule(ConfigurationManager.AppSettings.Get("WallpaperFolder")));
 
             bot.Start();
             while (Console.ReadLine() != "stop") { }
