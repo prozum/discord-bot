@@ -125,7 +125,9 @@ namespace Discord.Bot.Modules
 
             if (args.Any())
             {
-                switch (args.Dequeue())
+                var arg = args.Dequeue();
+
+                switch (arg)
                 {
                     case _help:
                         channel.SendMessage(_helpMsg);
@@ -134,34 +136,34 @@ namespace Discord.Bot.Modules
                         RandomCommand(args, channel);
                         break;
                     case _anime:
-                        var anime = SearchAndGet<AnimeBig>(args, Category.Anime);
+                        var animes = Search<Anime>(string.Join(" ", args), Category.Anime);
 
-                        if (anime != null)
-                            SendAnime(anime, channel);
+                        if (animes != null && animes.Any())
+                            SendAnime(Get<AnimeBig>(Category.Anime, animes.First().Id), channel);
                         break;
                     case _manga:
-                        var manga = SearchAndGet<MangaBig>(args, Category.Manga);
+                        var mangas = Search<Manga>(string.Join(" ", args), Category.Manga);
 
-                        if (manga != null)
-                            SendManga(manga, channel);
+                        if (mangas != null && mangas.Any())
+                            SendManga(Get<MangaBig>(Category.Manga, mangas.First().Id), channel);
                         break;
                     case _char:
-                        var character = SearchAndGet<CharacterBig>(args, Category.Character);
+                        var characters = Search<Character>(string.Join(" ", args), Category.Character);
 
-                        if (character != null)
-                            SendCharacter(character, channel);
+                        if (characters != null && characters.Any())
+                            SendCharacter(Get<CharacterBig>(Category.Character, characters.First().Id), channel);
                         break;
                     case _staff:
-                        var staff = SearchAndGet<StaffBig>(args, Category.Staff);
+                        var staffs = Search<Staff>(string.Join(" ", args), Category.Staff);
 
-                        if (staff != null)
-                            SendStaff(staff, channel);
+                        if (staffs != null && staffs.Any())
+                            SendStaff(Get<StaffBig>(Category.Staff, staffs.First().Id), channel);
                         break;
                     case _studio:
-                        var studio = SearchAndGet<Studio>(args, Category.Studio);
+                        var studios = Search<Studio>(string.Join(" ", args), Category.Studio);
 
-                        if (studio != null)
-                            SendStudio(studio, channel);
+                        if (studios != null && studios.Any())
+                            SendStudio(studios.First(), channel);
                         break;
                 }
             }
@@ -171,162 +173,209 @@ namespace Discord.Bot.Modules
             }
         }
 
+        int GetFitness(string str1, string str2)
+        {
+            str1 = string.Join("", str1.ToLower().Where(c => (c >= 'a' && c <= 'z') || char.IsDigit(c)));
+            str2 = string.Join("", str2.ToLower().Where(c => (c >= 'a' && c <= 'z') || char.IsDigit(c)));
+            return Enumerable.Range(0, Math.Min(str1.Length, str2.Length)).Count(i => str1[i] == str2[i]);
+        }
+
+        void GetAndSend(int id, Category category, DiscordChannel channel)
+        {
+            switch (category)
+            {
+                case Category.Anime:
+                    SendAnime(Get<AnimeBig>(category, id), channel);
+                    return;
+                case Category.Manga:
+                    SendManga(Get<MangaBig>(category, id), channel);
+                    return;
+                case Category.Character:
+                    SendCharacter(Get<CharacterBig>(category, id), channel);
+                    return;
+                case Category.Staff:
+                    SendStaff(Get<StaffBig>(category, id), channel);
+                    return;
+                case Category.Studio:
+                    SendStudio(Get<Studio>(category, id), channel);
+                    return;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(category), category, null);
+            }
+        }
+
+        Category GetCategory(string str)
+        {
+            switch (str)
+            {
+                case _anime:
+                    return Category.Anime;
+                case _manga:
+                    return Category.Manga;
+                case _char:
+                    return Category.Character;
+                case _staff:
+                    return Category.Staff;
+                case _studio:
+                    return Category.Studio;
+                default:
+                    return (Category) (-1);
+            }
+        }
+
+        object[] FilterNulls(params object[] objs)
+        {
+            return objs.Select(o => o ?? "").ToArray();
+        }
+
+        string EnusureMaxLength(string str)
+        {
+            if (str.Length > 1999)
+                return str.Remove(1996) + "...";
+
+            return str;
+        }
+
         void SendStudio(Studio studio, DiscordChannel channel)
         {
-            channel.SendMessage(
-                string.Format(_studioMsg,
-                    studio.studio_name ?? "",
-                    studio.studio_wiki ?? ""));
+            channel.SendMessage(EnusureMaxLength(
+                string.Format(
+                    _studioMsg,
+                    FilterNulls(
+                        studio.StudioName, 
+                        studio.StudioWiki))));
         }
 
         void SendStaff(StaffBig staff, DiscordChannel channel)
         {
-            channel.SendMessage(
-                string.Format(_staffMsg,
-                    staff.name_first ?? "" + (staff.name_last ?? ""),
-                    staff.language ?? "",
-                    staff.image_url_lge ?? "",
-                    staff.info ?? ""));
+            channel.SendMessage(EnusureMaxLength(
+                string.Format(
+                    _staffMsg,
+                    FilterNulls(
+                        staff.NameFirst ?? "" + (staff.NameLast ?? ""), 
+                        staff.Language, 
+                        staff.ImageUrlLge, 
+                        staff.Info))));
         }
 
         void SendCharacter(CharacterBig character, DiscordChannel channel)
         {
-            channel.SendMessage(
-                string.Format(_charMsg,
-                    character.name_first ?? "" + (character.name_last ?? ""),
-                    character.name_alt ?? "",
-                    character.role ?? "",
-                    character.image_url_lge ?? "",
-                    character.info ?? ""));
+            channel.SendMessage(EnusureMaxLength(
+                string.Format(
+                    _charMsg,
+                    FilterNulls(
+                        character.NameFirst ?? "" + (character.NameLast ?? ""), 
+                        character.NameAlt, character.Role, 
+                        character.ImageUrlLge, 
+                        character.Info))));
         }
 
         void SendAnime(AnimeBig anime, DiscordChannel channel)
         {
-            channel.SendMessage(
-                string.Format(_animeMsg,
-                    anime.title_romaji ?? "",
-                    anime.title_english ?? "",
-                    anime.duration,
-                    anime.total_episodes,
-                    anime.type ?? "",
-                    anime.id,
-                    anime.image_url_lge ?? "",
-                    anime.genres?.Aggregate("", (s, s1) => s1) ?? "",
-                    anime.popularity,
-                    anime.average_score ?? "",
-                    anime.list_stats != null ? 
-                        string.Format(_animeStats,
-                            anime.list_stats.completed,
-                            anime.list_stats.watching,
-                            anime.list_stats.dropped,
-                            anime.list_stats.on_hold,
-                            anime.list_stats.plan_to_watch) : "",
-                    anime.description ?? ""));
+            channel.SendMessage(EnusureMaxLength(
+                string.Format(
+                    _animeMsg,
+                    FilterNulls(
+                        anime.TitleRomaji, 
+                        anime.TitleEnglish, 
+                        anime.Duration, 
+                        anime.TotalEpisodes, 
+                        anime.Type, 
+                        anime.Id, 
+                        anime.ImageUrlLge, 
+                        anime.Genres?.Aggregate(", ", (g, g1) => g1.ToString()) ?? "", 
+                        anime.Popularity, 
+                        anime.AverageScore, 
+                        anime.ListStats != null ? 
+                            string.Format(
+                                _animeStats, 
+                                anime.ListStats.Completed, 
+                                anime.ListStats.Watching, 
+                                anime.ListStats.Dropped, 
+                                anime.ListStats.OnHold, 
+                                anime.ListStats.PlanToWatch) : "", 
+                        anime.Description))));
         }
 
         void SendManga(MangaBig manga, DiscordChannel channel)
         {
-            channel.SendMessage(
-                string.Format(_mangaMsg,
-                        manga.title_romaji ?? "",
-                        manga.title_english ?? "",
-                        manga.total_chapters,
-                        manga.total_volumes,
-                        manga.type ?? "",
-                        manga.id,
-                        manga.image_url_lge ?? "",
-                        manga.genres?.Aggregate("", (s, s1) => s1) ?? "",
-                        manga.popularity,
-                        manga.average_score ?? "",
-                        manga.list_stats != null ?
-                            string.Format(_mangaStats,
-                                manga.list_stats.completed,
-                                manga.list_stats.reading,
-                                manga.list_stats.dropped,
-                                manga.list_stats.on_hold,
-                                manga.list_stats.plan_to_watch) : "",
-                        manga.description ?? ""));
+            channel.SendMessage(EnusureMaxLength(
+                string.Format(
+                    _mangaMsg,
+                    FilterNulls(
+                        manga.TitleRomaji, 
+                        manga.TitleEnglish, 
+                        manga.TotalChapters, 
+                        manga.TotalVolumes, 
+                        manga.Type, 
+                        manga.Id, 
+                        manga.ImageUrlLge, 
+                        manga.Genres?.Aggregate(", ", (res, g1) => g1.ToString()) ?? "", 
+                        manga.Popularity, 
+                        manga.AverageScore, 
+                        manga.ListStats != null ? 
+                            string.Format(
+                                _mangaStats, 
+                                manga.ListStats.Completed, 
+                                manga.ListStats.Reading, 
+                                manga.ListStats.Dropped, 
+                                manga.ListStats.OnHold, 
+                                manga.ListStats.PlanToRead) : "", 
+                        manga.Description))));
         }
 
         void RandomCommand(Queue<string> args, DiscordChannel channel)
         {
             if (args.Count == 0)
                 return;
-            
+
             switch (args.Dequeue())
             {
                 case "anime":
-                    AnimeBig anime;
-
-                    if (!TryGetRandom(Category.Anime, 30000, out anime))
-                        return;
-
-                    SendAnime(anime, channel);
+                    var anime = GetRandom<Anime>(Category.Anime);
+                    SendAnime(Get<AnimeBig>(Category.Anime, anime.Id), channel);
                     break;
                 case "manga":
-                    MangaBig manga;
-
-                    if (!TryGetRandom(Category.Manga, 60000, out manga))
-                        return;
-
-                    SendManga(manga, channel);
-                    break;
-                case "char":
-                    CharacterBig character;
-
-                    if (!TryGetRandom(Category.Character, 100000, out character))
-                        return;
-
-                    SendCharacter(character, channel);
-                    break;
-                case "studio":
-                    Studio studio;
-
-                    if (!TryGetRandom(Category.Studio, 3000, out studio))
-                        return;
-
-                    SendStudio(studio, channel);
-                    break;
-                case "staff":
-                    StaffBig staff;
-
-                    if (!TryGetRandom(Category.Staff, 40000, out staff))
-                        return;
-
-                    SendStaff(staff, channel);
+                    var manga = GetRandom<Manga>(Category.Manga);
+                    SendManga(Get<MangaBig>(Category.Manga, manga.Id), channel);
                     break;
             }
         }
 
-        bool TryGetRandom<T>(Category category, int max, out T res) where T : AnilistObject
+        static readonly string[] _seasons = {"winter", "spring", "summer", "fall"};
+        T GetRandom<T>(Category category) where T : AnilistObject
         {
             var randomizer = new Random();
-            res = null;
-
+            T[] res;
+            
             do
             {
-                Console.WriteLine("Trying to get Random " + category);
                 if (!CheckAuth())
-                    return false;
+                    return null;
 
-                var index = randomizer.Next(max);
-                res = Anilist.GetAndDeserialize<T>(_auth, category, index);
-            } while (res == null);
-
-            return true;
+                res = Anilist.BrowseAndDeserialize<T>(_auth, category, 
+                    "year=" + randomizer.Next(1951, DateTime.Now.Year + 1), 
+                    "season=" + _seasons[randomizer.Next(0, 4)], 
+                    "full_page=true");
+            } while (res == null || res.Length == 0);
+            
+            return res[randomizer.Next(0, res.Length)];
         }
 
-        T SearchAndGet<T>(Queue<string> args, Category category) where T : AnilistObject
+        T[] Search<T>(string name, Category category) where T : AnilistObject
         {
-            if (!CheckAuth() || !args.Any())
+            if (!CheckAuth())
                 return null;
 
-            var response = Anilist.SearchAndDeserialize<T>(_auth, category, args.Dequeue());
+            return Anilist.SearchAndDeserialize<T>(_auth, category, name);
+        }
 
-            if (response == null || !response.Any())
+        T Get<T>(Category category, int id) where T : AnilistObject
+        {
+            if (!CheckAuth())
                 return null;
 
-            return Anilist.GetAndDeserialize<T>(_auth, category, response.First().id);
+            return Anilist.GetAndDeserialize<T>(_auth, category, id);
         }
 
         bool CheckAuth()
