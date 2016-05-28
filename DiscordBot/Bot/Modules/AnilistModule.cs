@@ -6,21 +6,14 @@ using DiscordSharp.Events;
 using DiscordSharp.Objects;
 using UnofficialAniListApiSharp.Api;
 using UnofficialAniListApiSharp.Api.Data;
+using UnofficialAniListApiSharp.Client;
 
 namespace Discord.Bot.Modules
 {
     public class AnilistModule : BaseMessageModule
     {
         const string _commandName = "#anilist ";
-
-        const string _help = "-help";
-        const string _random = "-random";
-        const string _anime = "-anime";
-        const string _manga = "-manga";
-        const string _char = "-char";
-        const string _staff = "-staff";
-        const string _studio = "-studio";
-
+        
         const string _helpMsg =
             "```" +
             "#anlist <option>\n" +
@@ -39,28 +32,30 @@ namespace Discord.Bot.Modules
             "English Title: {1}\n" +
             "Duration: {2}\n" +
             "Episodes: {3}\n" +
-            "Type: {4}\n" +
-            "Link: https://anilist.co/anime/{5}\n" +
-            "Image: {6}\n" +
-            "Genres: {7}\n" +
-            "Popularity: {8}\n" +
-            "Score: {9}\n" +
-            "{10}\n" +
-            "Description:\n{11}\n";
+            "Year: {4}\n" +
+            "Type: {5}\n" +
+            "Link: https://anilist.co/anime/{6}\n" +
+            "Image: {7}\n" +
+            "Genres: {8}\n" +
+            "Popularity: {9}\n" +
+            "Score: {10}\n" +
+            "{11}\n" +
+            "Description:\n{12}\n";
 
         const string _mangaMsg =
             "Title: {0}\n" +
             "English Title: {1}\n" +
             "Chapters: {2}\n" +
             "Volumes: {3}\n" +
-            "Type: {4}\n" +
-            "Link: https://anilist.co/anime/{5}\n" +
-            "Image: {6}\n" +
-            "Genres: {7}\n" +
-            "Popularity: {8}\n" +
-            "Score: {9}\n" +
-            "{10}\n" +
-            "Description:\n{11}\n";
+            "Year: {4}\n" +
+            "Type: {5}\n" +
+            "Link: https://anilist.co/anime/{6}\n" +
+            "Image: {7}\n" +
+            "Genres: {8}\n" +
+            "Popularity: {9}\n" +
+            "Score: {10}\n" +
+            "{11}\n" +
+            "Description:\n{12}\n";
 
         const string _mangaStats =
             "Stats:\n" +
@@ -95,18 +90,74 @@ namespace Discord.Bot.Modules
             "Name: {0}\n" +
             "Wiki: {1}\n";
 
+        readonly Dictionary<string, Action<Queue<string>, DiscordChannel>> _commands;
+        readonly AnilistClient _client;
 
-        readonly string _clientId;
-        readonly string _clientSecret;
-
-        Authentication _auth;
-        DateTime _nextUpdate;
-        
-
-        public AnilistModule(string clientId, string clientSecret)
+        public AnilistModule(AnilistClient client)
         {
-            _clientId = clientId;
-            _clientSecret = clientSecret;
+            _client = client;
+            _commands = new Dictionary<string, Action<Queue<string>, DiscordChannel>>
+            {
+                { "-help", (args, channel) => channel.SendMessage(_helpMsg) },
+                { "-random", (args, channel) =>
+                    {
+                        if (args.Count == 0)
+                            return;
+
+                        switch (args.Dequeue())
+                        {
+                            case "anime":
+                                var anime = GetRandom<Anime>(Category.Anime);
+                                SendAnime(client.Get<AnimeBig>(Category.Anime, anime.Id), channel);
+                                break;
+                            case "manga":
+                                var manga = GetRandom<Manga>(Category.Manga);
+                                SendManga(client.Get<MangaBig>(Category.Manga, manga.Id), channel);
+                                break;
+                        }
+                    }
+                },
+                { "-anime", (args, channel) =>
+                    {
+                        var animes = client.Search<Anime>(Category.Anime, string.Join(" ", args));
+
+                        if (animes != null && animes.Any())
+                            SendAnime(client.Get<AnimeBig>(Category.Anime, animes.First().Id), channel);
+                    }
+                },
+                { "-manga", (args, channel) =>
+                    {
+                        var mangas = client.Search<Manga>(Category.Manga, string.Join(" ", args));
+
+                        if (mangas != null && mangas.Any())
+                            SendManga(client.Get<MangaBig>(Category.Manga, mangas.First().Id), channel);
+                    }
+                },
+                { "-char", (args, channel) =>
+                    {
+                        var characters = _client.Search<Character>(Category.Character, string.Join(" ", args));
+
+                        if (characters != null && characters.Any())
+                            SendCharacter(_client.Get<CharacterBig>(Category.Character, characters.First().Id), channel);
+                    }
+                },
+                { "-staff", (args, channel) =>
+                    {
+                        var staffs = _client.Search<Staff>(Category.Staff, string.Join(" ", args));
+
+                        if (staffs != null && staffs.Any())
+                            SendStaff(_client.Get<StaffBig>(Category.Staff, staffs.First().Id), channel);
+                    }
+                },
+                { "-studio", (args, channel) =>
+                    {
+                        var studios = _client.Search<Studio>(Category.Studio, string.Join(" ", args));
+
+                        if (studios != null && studios.Any())
+                            SendStudio(studios.First(), channel);
+                    }
+                }
+            };
         }
 
         public override void MessageReceived(object sender, DiscordMessageEventArgs e)
@@ -125,101 +176,15 @@ namespace Discord.Bot.Modules
 
             if (args.Any())
             {
+                Action<Queue<string>, DiscordChannel> command;
                 var arg = args.Dequeue();
 
-                switch (arg)
-                {
-                    case _help:
-                        channel.SendMessage(_helpMsg);
-                        break;
-                    case _random:
-                        RandomCommand(args, channel);
-                        break;
-                    case _anime:
-                        var animes = Search<Anime>(string.Join(" ", args), Category.Anime);
-
-                        if (animes != null && animes.Any())
-                            SendAnime(Get<AnimeBig>(Category.Anime, animes.First().Id), channel);
-                        break;
-                    case _manga:
-                        var mangas = Search<Manga>(string.Join(" ", args), Category.Manga);
-
-                        if (mangas != null && mangas.Any())
-                            SendManga(Get<MangaBig>(Category.Manga, mangas.First().Id), channel);
-                        break;
-                    case _char:
-                        var characters = Search<Character>(string.Join(" ", args), Category.Character);
-
-                        if (characters != null && characters.Any())
-                            SendCharacter(Get<CharacterBig>(Category.Character, characters.First().Id), channel);
-                        break;
-                    case _staff:
-                        var staffs = Search<Staff>(string.Join(" ", args), Category.Staff);
-
-                        if (staffs != null && staffs.Any())
-                            SendStaff(Get<StaffBig>(Category.Staff, staffs.First().Id), channel);
-                        break;
-                    case _studio:
-                        var studios = Search<Studio>(string.Join(" ", args), Category.Studio);
-
-                        if (studios != null && studios.Any())
-                            SendStudio(studios.First(), channel);
-                        break;
-                }
+                if (_commands.TryGetValue(arg, out command))
+                    command(args, channel);
             }
             else
             {
                 channel.SendMessage(_helpMsg);
-            }
-        }
-
-        int GetFitness(string str1, string str2)
-        {
-            str1 = string.Join("", str1.ToLower().Where(c => (c >= 'a' && c <= 'z') || char.IsDigit(c)));
-            str2 = string.Join("", str2.ToLower().Where(c => (c >= 'a' && c <= 'z') || char.IsDigit(c)));
-            return Enumerable.Range(0, Math.Min(str1.Length, str2.Length)).Count(i => str1[i] == str2[i]);
-        }
-
-        void GetAndSend(int id, Category category, DiscordChannel channel)
-        {
-            switch (category)
-            {
-                case Category.Anime:
-                    SendAnime(Get<AnimeBig>(category, id), channel);
-                    return;
-                case Category.Manga:
-                    SendManga(Get<MangaBig>(category, id), channel);
-                    return;
-                case Category.Character:
-                    SendCharacter(Get<CharacterBig>(category, id), channel);
-                    return;
-                case Category.Staff:
-                    SendStaff(Get<StaffBig>(category, id), channel);
-                    return;
-                case Category.Studio:
-                    SendStudio(Get<Studio>(category, id), channel);
-                    return;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(category), category, null);
-            }
-        }
-
-        Category GetCategory(string str)
-        {
-            switch (str)
-            {
-                case _anime:
-                    return Category.Anime;
-                case _manga:
-                    return Category.Manga;
-                case _char:
-                    return Category.Character;
-                case _staff:
-                    return Category.Staff;
-                case _studio:
-                    return Category.Studio;
-                default:
-                    return (Category) (-1);
             }
         }
 
@@ -228,8 +193,10 @@ namespace Discord.Bot.Modules
             return objs.Select(o => o ?? "").ToArray();
         }
 
-        string EnusureMaxLength(string str)
+        string Format(string format, params object[] objs)
         {
+            var str = string.Format(format, FilterNulls(objs));
+            
             if (str.Length > 1999)
                 return str.Remove(1996) + "...";
 
@@ -238,108 +205,82 @@ namespace Discord.Bot.Modules
 
         void SendStudio(Studio studio, DiscordChannel channel)
         {
-            channel.SendMessage(EnusureMaxLength(
-                string.Format(
-                    _studioMsg,
-                    FilterNulls(
-                        studio.StudioName, 
-                        studio.StudioWiki))));
+            channel.SendMessage(
+                Format(_studioMsg,
+                    studio.StudioName,
+                    studio.StudioWiki));
         }
 
         void SendStaff(StaffBig staff, DiscordChannel channel)
         {
-            channel.SendMessage(EnusureMaxLength(
-                string.Format(
-                    _staffMsg,
-                    FilterNulls(
-                        staff.NameFirst ?? "" + (staff.NameLast ?? ""), 
-                        staff.Language, 
-                        staff.ImageUrlLge, 
-                        staff.Info))));
+            channel.SendMessage(
+                Format(_staffMsg,
+                    staff.NameFirst ?? "" + (staff.NameLast ?? ""), 
+                    staff.Language, 
+                    staff.ImageUrlLge, 
+                    staff.Info));
         }
 
         void SendCharacter(CharacterBig character, DiscordChannel channel)
         {
-            channel.SendMessage(EnusureMaxLength(
-                string.Format(
-                    _charMsg,
-                    FilterNulls(
-                        character.NameFirst ?? "" + (character.NameLast ?? ""), 
-                        character.NameAlt, character.Role, 
-                        character.ImageUrlLge, 
-                        character.Info))));
+            channel.SendMessage(
+                Format(_charMsg,
+                    character.NameFirst ?? "" + (character.NameLast ?? ""), 
+                    character.NameAlt, character.Role, 
+                    character.ImageUrlLge, 
+                    character.Info));
         }
 
         void SendAnime(AnimeBig anime, DiscordChannel channel)
         {
-            channel.SendMessage(EnusureMaxLength(
-                string.Format(
-                    _animeMsg,
-                    FilterNulls(
-                        anime.TitleRomaji, 
-                        anime.TitleEnglish, 
-                        anime.Duration, 
-                        anime.TotalEpisodes, 
-                        anime.Type, 
-                        anime.Id, 
-                        anime.ImageUrlLge, 
-                        anime.Genres?.Aggregate(", ", (g, g1) => g1.ToString()) ?? "", 
-                        anime.Popularity, 
-                        anime.AverageScore, 
-                        anime.ListStats != null ? 
-                            string.Format(
-                                _animeStats, 
-                                anime.ListStats.Completed, 
-                                anime.ListStats.Watching, 
-                                anime.ListStats.Dropped, 
-                                anime.ListStats.OnHold, 
-                                anime.ListStats.PlanToWatch) : "", 
-                        anime.Description))));
+            channel.SendMessage(
+                Format(_animeMsg,
+                    anime.TitleRomaji, 
+                    anime.TitleEnglish, 
+                    anime.Duration, 
+                    anime.TotalEpisodes, 
+                    anime.StartDate?.Remove(4) ?? "???",
+                    anime.Type, 
+                    anime.Id, 
+                    anime.ImageUrlLge, 
+                    anime.Genres?.Aggregate(", ", (g, g1) => g1.ToString()) ?? "", 
+                    anime.Popularity, 
+                    anime.AverageScore, 
+                    anime.ListStats != null ? 
+                        string.Format(
+                            _animeStats, 
+                            anime.ListStats.Completed, 
+                            anime.ListStats.Watching, 
+                            anime.ListStats.Dropped, 
+                            anime.ListStats.OnHold, 
+                            anime.ListStats.PlanToWatch) : "", 
+                    anime.Description));
         }
 
         void SendManga(MangaBig manga, DiscordChannel channel)
         {
-            channel.SendMessage(EnusureMaxLength(
-                string.Format(
-                    _mangaMsg,
-                    FilterNulls(
-                        manga.TitleRomaji, 
-                        manga.TitleEnglish, 
-                        manga.TotalChapters, 
-                        manga.TotalVolumes, 
-                        manga.Type, 
-                        manga.Id, 
-                        manga.ImageUrlLge, 
-                        manga.Genres?.Aggregate(", ", (res, g1) => g1.ToString()) ?? "", 
-                        manga.Popularity, 
-                        manga.AverageScore, 
-                        manga.ListStats != null ? 
-                            string.Format(
-                                _mangaStats, 
-                                manga.ListStats.Completed, 
-                                manga.ListStats.Reading, 
-                                manga.ListStats.Dropped, 
-                                manga.ListStats.OnHold, 
-                                manga.ListStats.PlanToRead) : "", 
-                        manga.Description))));
-        }
-
-        void RandomCommand(Queue<string> args, DiscordChannel channel)
-        {
-            if (args.Count == 0)
-                return;
-
-            switch (args.Dequeue())
-            {
-                case "anime":
-                    var anime = GetRandom<Anime>(Category.Anime);
-                    SendAnime(Get<AnimeBig>(Category.Anime, anime.Id), channel);
-                    break;
-                case "manga":
-                    var manga = GetRandom<Manga>(Category.Manga);
-                    SendManga(Get<MangaBig>(Category.Manga, manga.Id), channel);
-                    break;
-            }
+            channel.SendMessage(
+                Format(_mangaMsg,
+                    manga.TitleRomaji, 
+                    manga.TitleEnglish, 
+                    manga.TotalChapters, 
+                    manga.TotalVolumes, 
+                    manga.StartDate?.Remove(4) ?? "???",
+                    manga.Type, 
+                    manga.Id, 
+                    manga.ImageUrlLge, 
+                    manga.Genres?.Aggregate(", ", (res, g1) => g1.ToString()) ?? "", 
+                    manga.Popularity, 
+                    manga.AverageScore, 
+                    manga.ListStats != null ? 
+                        string.Format(
+                            _mangaStats, 
+                            manga.ListStats.Completed, 
+                            manga.ListStats.Reading, 
+                            manga.ListStats.Dropped, 
+                            manga.ListStats.OnHold, 
+                            manga.ListStats.PlanToRead) : "", 
+                    manga.Description));
         }
 
         static readonly string[] _seasons = {"winter", "spring", "summer", "fall"};
@@ -350,43 +291,13 @@ namespace Discord.Bot.Modules
             
             do
             {
-                if (!CheckAuth())
-                    return null;
-
-                res = Anilist.BrowseAndDeserialize<T>(_auth, category, 
-                    "year=" + randomizer.Next(1951, DateTime.Now.Year + 1), 
+                res = _client.Browse<T>(category, 
+                    "year=" + randomizer.Next(2000, DateTime.Now.Year + 1), 
                     "season=" + _seasons[randomizer.Next(0, 4)], 
                     "full_page=true");
             } while (res == null || res.Length == 0);
             
             return res[randomizer.Next(0, res.Length)];
-        }
-
-        T[] Search<T>(string name, Category category) where T : AnilistObject
-        {
-            if (!CheckAuth())
-                return null;
-
-            return Anilist.SearchAndDeserialize<T>(_auth, category, name);
-        }
-
-        T Get<T>(Category category, int id) where T : AnilistObject
-        {
-            if (!CheckAuth())
-                return null;
-
-            return Anilist.GetAndDeserialize<T>(_auth, category, id);
-        }
-
-        bool CheckAuth()
-        {
-            if (_auth == null || _nextUpdate < DateTime.Now)
-            {
-                _nextUpdate = DateTime.Now + new TimeSpan(1, 0, 0);
-                _auth = Anilist.GrantClientCredentials(_clientId, _clientSecret);
-            }
-
-            return _auth != null;
         }
     }
 }

@@ -67,7 +67,6 @@
     <Compile Include="Bot\Modules\AESharpExtensions\SendMsgFunc.cs" />
     <Compile Include="Bot\Modules\AnilistModule.cs" />
     <Compile Include="Bot\Modules\AnimeGuessModule.cs" />
-    <Compile Include="Bot\Modules\MALmodule.cs" />
     <Compile Include="Bot\Modules\TemplateModule.cs" />
     <Compile Include="Bot\Modules\WallpaperModule.cs" />
     <Compile Include="Program.cs" />
@@ -94,7 +93,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="libsodium.dll" />
-    <Content Include="MyAnimeListSharp.dll" />
     <Content Include="opus.dll" />
   </ItemGroup>
   <PropertyGroup>

@@ -7,34 +7,32 @@ using DiscordSharp.Events;
 using System.Threading;
 using DiscordSharp;
 using DiscordSharp.Objects;
-using MyAnimeListSharp.Core;
-using MyAnimeListSharp.Auth;
-using MyAnimeListSharp.Facade;
-using MyAnimeListSharp.Util;
+using UnofficialAniListApiSharp.Api;
+using UnofficialAniListApiSharp.Api.Data;
+using UnofficialAniListApiSharp.Client;
 
 namespace Discord.Bot.Modules
 {
     public class AnimeGuessModule : BaseMessageModule
     {
         enum GameState { Idle, AwaitingPlayers, AwaitingAnime, Playing }
-        enum GameHint { Synopsis, Image }
 
         const string _commandName = "#guess ";
-        const string _help = "help";
-        const string _host = "host";
-        const string _start = "start";
-        const string _join = "join";
-        const string _stop = "stop";
-        const string _pass = "pass";
+        const string _help = "-help";
+        const string _host = "-host";
+        const string _start = "-start";
+        const string _join = "-join";
+        const string _stop = "-stop";
+        const string _pass = "-pass";
 
         const string _helpStr =
             "#guess \"command\"\n" +
-            "\thelp     Get help\n" +
-            "\thost     Host a game\n" +
-            "\tstart    Start your hosted game\n" +
-            "\tjoin     Join a hosted game\n" +
-            "\tstop     Stop your hosted game\n" +
-            "\tpass     Pass your guess\n";
+            "\t-help     Get help\n" +
+            "\t-host     Host a game\n" +
+            "\t-start    Start your hosted game\n" +
+            "\t-join     Join a hosted game\n" +
+            "\t-stop     Stop your hosted game\n" +
+            "\t-pass     Pass your guess\n";
 
         const string _helpChooser =
             "You have been chosen to pick an anime.\n" +
@@ -53,17 +51,18 @@ namespace Discord.Bot.Modules
             "Bot:\n" + 
             "You have chosen Clannad";
 
-        const string _anwser =
-            "Answer: {0}\n" +
-            "http://myanimelist.net/anime/{1}";
+        const string _answer =
+            "Answer:\n" +
+            "\tTitle: {0}\n" +
+            "\tEnglish Title: {1}\n";
 
         const string _lost = 
             "No one guessed the anime.\n" +
-            _anwser;
+            _answer;
 
         const string _win =
             "{2} guessed the anime.\n" +
-            _anwser + "\n\n" +
+            _answer + "\n\n" +
             "Current Scores:\n";
 
         const string _suggest =
@@ -72,29 +71,28 @@ namespace Discord.Bot.Modules
             "English Title: {2}\n\n";
 
         const bool _hostCanGuess = false;
-        const uint _minPlayers = 2;
+        const uint _minPlayers = 0;
         const uint _awaittime = 60;
         const uint _maxScore = 5;
 
         readonly Dictionary<DiscordMember, uint> _players = new Dictionary<DiscordMember, uint>();
         readonly HashSet<DiscordMember> _haspassed = new HashSet<DiscordMember>();
         readonly Random _randomizer = new Random();
-        readonly SearchMethods _search;
+        readonly AnilistClient _client;
 
         GameState _state = GameState.Idle;
-        GameHint _hint = GameHint.Synopsis;
         bool _awaiting = true;
 
         DiscordMember _choosingPlayer;
         DiscordMember _hostingPlayer;
-        AnimeEntry _chosenanime;
+        AnimeBig _chosenanime;
         string _title;
         string _engtitle;
 
 
-        public AnimeGuessModule(ICredentialContext credential)
+        public AnimeGuessModule(AnilistClient client)
         {
-            _search = new SearchMethods(credential);
+            _client = client;
         }
 
         public override void MessageReceived(object sender, DiscordMessageEventArgs e)
@@ -147,7 +145,7 @@ namespace Discord.Bot.Modules
             if (_players.All(item => item.Key == _choosingPlayer || 
                              _haspassed.Contains(item.Key)))
             {
-                msg += "\n\n" + string.Format(_lost, _chosenanime.Title, _chosenanime.Id);
+                msg += "\n\n" + string.Format(_lost, _chosenanime.TitleRomaji, _chosenanime.TitleEnglish);
                 _awaiting = false;
             }
 
@@ -172,7 +170,7 @@ namespace Discord.Bot.Modules
 
             _players[author]++;
 
-            var sendmsg = string.Format(_win, _chosenanime.Title, _chosenanime.Id, author.Username);
+            var sendmsg = string.Format(_win, _chosenanime.TitleRomaji, _chosenanime.TitleEnglish, author.Username);
 
             sendmsg += _players.Aggregate(sendmsg, (s, i) => i.Key.Username + ": " + i.Value + "\n");
 
@@ -194,7 +192,6 @@ namespace Discord.Bot.Modules
             _players.Clear();
             _choosingPlayer = null;
             _chosenanime = null;
-            _hint = GameHint.Synopsis;
             _players.Add(author, 0);
             _hostingPlayer = author;
 
@@ -237,7 +234,7 @@ namespace Discord.Bot.Modules
             channel.SendMessage(author.Username + " joined the game!");
         }
 
-        List<AnimeEntry> _tempEntries;
+        Anime[] _tempEntries;
         public override void PrivateMessageReceived(object sender, DiscordPrivateMessageEventArgs e)
         {
             var member = e.Author;
@@ -252,34 +249,33 @@ namespace Discord.Bot.Modules
             if (int.TryParse(message, out choice))
             {
                 // The choice was not valid, so return
-                if (_tempEntries == null || choice >= _tempEntries.Count)
+                if (_tempEntries == null || choice >= _tempEntries.Length)
                     return;
 
                 _awaiting = false;
-                _chosenanime = _tempEntries[choice];
+                _chosenanime = _client.Get<AnimeBig>(Category.Anime, _tempEntries[choice].Id);
 
-                var title = _chosenanime.Title;
-                var engtitle = _chosenanime.English;
+                var title = _chosenanime.TitleRomaji;
+                var engtitle = _chosenanime.TitleEnglish;
 
                 // filter out big letters, space and special characters
                 _title = string.Join("", title.ToLower().Where(c => (c >= 'a' && c <= 'z') || char.IsDigit(c)));
                 _engtitle = string.Join("", engtitle.ToLower().Where(c => (c >= 'a' && c <= 'z') || char.IsDigit(c)));
-                member.SendMessage("You have chosen " + _chosenanime.Title);
+                member.SendMessage("You have chosen " + _chosenanime.TitleRomaji);
 
                 return;
             }
 
-            var response = _search.SearchAnime(message.Replace(' ', '_'));
+            _tempEntries = _client.Search<Anime>(Category.Anime, message);
 
-            if (!string.IsNullOrEmpty(response))
+            if (_tempEntries != null)
             {
                 var suggests = "";
-                _tempEntries = new SearchResponseDeserializer<AnimeSearchResponse>().Deserialize(response).Entries;
-
+                
                 // Provide the chooser options of what anime he wants the others to guess
-                for (var i = 0; i < _tempEntries.Count; i++)
+                for (var i = 0; i < _tempEntries.Length; i++)
                 {
-                    suggests += string.Format(_suggest, i, _tempEntries[i].Title, _tempEntries[i].English);
+                    suggests += string.Format(_suggest, i, _tempEntries[i].TitleRomaji, _tempEntries[i].TitleEnglish);
                 }
 
                 member.SendMessage(suggests);
@@ -307,49 +303,22 @@ namespace Discord.Bot.Modules
                 channel.SendMessage(_choosingPlayer.Username + " is choosing an anime.");
 
                 _state = GameState.AwaitingAnime;
-                Await(_awaittime, str => { channel.SendMessage(str); Thread.Sleep(100); _choosingPlayer.SendMessage(str); });
+                AwaitAnime(_awaittime);
 
                 if (_state == GameState.Idle)
                     return;
 
                 if (_chosenanime != null)
                 {
-                    switch (_hint)
-                    {
-                        case GameHint.Synopsis:
-                            var msg = _chosenanime.Synopsis.Replace("<br />", "")
-                                                     .Replace("&#039;", "'")
-                                                     .Replace("[/i]", "")
-                                                     .Replace("[i]", "")
-                                                     .Replace("&quot;", "\"")
-                                                     .Replace("&mdash;", "-");
-
-                            if (!string.IsNullOrEmpty(_chosenanime.Title))
-                                msg = msg.Replace(_chosenanime.Title, "****");
-
-                            if (!string.IsNullOrEmpty(_chosenanime.English))
-                                msg = msg.Replace(_chosenanime.English, "****");
-
-                            channel.SendMessage(
-                                "Anime has been chosen.\n" +
-                                "Synopsis:\n" +
-                                msg.Remove(200) + "...");
-                            break;
-                        case GameHint.Image:
-                            channel.SendMessage(
-                                "Anime has been chosen.\n" +
-                                "Image:\n" +
-                                _chosenanime.Image);
-                            break;
-                        default:
-                            throw new NotImplementedException();
-                    }
+                    channel.SendMessage(
+                        "Anime has been chosen.\n" +
+                        "Genres: " + string.Join(", ", _chosenanime.Genres.Select(g => g.ToString())));
 
                     _state = GameState.Playing;
-                    Await(_awaittime, str => channel.SendMessage(str));
+                    GuessTimer(_awaittime, channel);
 
                     if (_awaiting)
-                        channel.SendMessage(string.Format(_lost, _chosenanime.Title, _chosenanime.Id));
+                        channel.SendMessage(string.Format(_lost, _chosenanime.TitleRomaji, _chosenanime.TitleEnglish, _chosenanime.Id));
                 }
                 else
                 {
@@ -377,7 +346,7 @@ namespace Discord.Bot.Modules
             return false;
         }
 
-        void Await(uint seconds, Action<string> send)
+        void AwaitAnime(uint seconds)
         {
             const int last = 5;
             var time = seconds;
@@ -391,10 +360,88 @@ namespace Discord.Bot.Modules
                     break;
                 
                 if (time == half)
-                    send(time + " seconds remaining!");
+                    _choosingPlayer.SendMessage(time + " seconds remaining!");
 
-                if (time == last)
-                    send(time + " seconds remaining!");
+                if (time <= last)
+                    _choosingPlayer.SendMessage(time.ToString());
+
+                Thread.Sleep(1000);
+                time -= 1;
+            }
+        }
+
+        void GuessTimer(uint seconds, DiscordChannel channel)
+        {
+            const int last = 5;
+            var time = seconds;
+            var secondHint = time - seconds / 6;
+            var thirdHint = time - seconds / 3;
+            var forthHint = seconds / 2;
+            var fifthHint = seconds / 4;
+
+            _awaiting = true;
+
+            while (_awaiting)
+            {
+                if (time == 0)
+                    break;
+
+                if (time == secondHint)
+                {
+                    channel.SendMessage($"{time} seconds remaining!\n" +
+                                        $"Genres: {string.Join(", ", _chosenanime.Genres.Select(g => g.ToString()))}\n" + 
+                                        $"Episodes: {_chosenanime?.TotalEpisodes?.ToString() ?? "???"}\n" +
+                                        $"Type: {_chosenanime.Type}\n");
+                }
+
+                if (time == thirdHint)
+                {
+                    channel.SendMessage($"{time} seconds remaining!\n" +
+                                        $"Genres: {string.Join(", ", _chosenanime.Genres.Select(g => g.ToString()))}\n" +
+                                        $"Episodes: {_chosenanime.TotalEpisodes?.ToString() ?? "???"}\n" +
+                                        $"Type: {_chosenanime.Type}\n" +
+                                        $"Year: {_chosenanime.StartDate?.Remove(4) ?? "???" }");
+                }
+
+                if (time == forthHint)
+                {
+
+                    var desc = _chosenanime.Description
+                        .Replace(_chosenanime.TitleRomaji, "****")
+                        .Replace(_chosenanime.TitleEnglish, "****");
+
+                    if (desc.Length >= 200)
+                        desc = desc.Remove(197) + "...";
+
+                    channel.SendMessage($"{time} seconds remaining!\n" +
+                                        $"Genres: {string.Join(", ", _chosenanime.Genres.Select(g => g.ToString()))}\n" +
+                                        $"Episodes: {_chosenanime.TotalEpisodes?.ToString() ?? "???"}\n" +
+                                        $"Type: {_chosenanime.Type}\n" +
+                                        $"Description:\n" +
+                                        $"{desc}");
+                }
+
+                if (time == fifthHint)
+                {
+
+                    var desc = _chosenanime.Description
+                        .Replace(_chosenanime.TitleRomaji, "****")
+                        .Replace(_chosenanime.TitleEnglish, "****");
+
+                    if (desc.Length >= 200)
+                        desc = desc.Remove(197) + "...";
+
+                    channel.SendMessage($"{time} seconds remaining!\n" +
+                                        $"Genres: {string.Join(", ", _chosenanime.Genres.Select(g => g.ToString()))}\n" +
+                                        $"Episodes: {_chosenanime.TotalEpisodes?.ToString() ?? "???"}\n" +
+                                        $"Type: {_chosenanime.Type}\n" +
+                                        $"Description:\n" +
+                                        $"{desc}" +
+                                        $"Image: {_chosenanime.ImageUrlLge}\n");
+                }
+
+                if (time <= last)
+                    channel.SendMessage(time.ToString());
 
                 Thread.Sleep(1000);
                 time -= 1;
