@@ -1,32 +1,31 @@
 ﻿using System;
 using Discord.Bot.BaseModules;
+using DiscordSharp;
 using DiscordSharp.Events;
 using DiscordSharp.Objects;
 
 namespace Discord.Bot.Modules
 {
-    public class BrainFuckModule : BaseMessageModule
+    public class BrainFuckModule : BaseCommandModule
     {
-        static readonly string _commandName = "#bfuck ";
+        public BrainFuckModule(DiscordBot bot) 
+            : base(bot)
+        { }
 
-        public override void MessageReceived(object sender, DiscordMessageEventArgs e)
+        public override string CommandName => "bfuck";
+        public override string Help =>
+@"Interprets Brainfuck code.
+
+Arguments:
+    Takes 1 argument.
+    Has to be valid Brainfuck code.";
+
+        public override void CommandCalled(string[] args, DiscordMember author, DiscordChannel channel, DiscordMessage message,
+            DiscordMessageType messageType)
         {
-            var channel = e.Channel;
-            var message = e.Message;
-
-            try
-            {
-                if (message.Content.StartsWith(_commandName))
-                    Interpret(message.Content.Remove(0, _commandName.Length), channel);
-            }
-            catch (Exception ex)
-            {
-                channel.SendMessage("Error!\n" + ex.Message);
-            }
-        }
-
-        private void Interpret(string str, DiscordChannel channel)
-        {
+            if (args.Length != 1)
+                return;
+            
             var output = "";
 
             var ic = 0;
@@ -37,7 +36,7 @@ namespace Discord.Bot.Modules
             // The array that acts as the interpreter's virtual memory
             var mem = new char[30000];
             // The string containing the comands to be executed
-            var com = str.ToCharArray();
+            var com = args[0];
             //End Of File
             var eof = com.Length;
 

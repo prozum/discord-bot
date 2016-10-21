@@ -1,25 +1,30 @@
 ﻿using Discord.Bot.BaseModules;
+using DiscordSharp;
 using DiscordSharp.Events;
+using DiscordSharp.Objects;
 
 namespace Discord.Bot.Modules
 {
-    public class TemplateModule : BaseMessageModule
+    public class TemplateModule : BaseCommandModule
     {
-        // This is the command name that the module will be looking for
-        const string _commandName = "#hello ";
+        public TemplateModule(DiscordBot bot) 
+            : base(bot)
+        { }
+        public override string CommandName => "hello";
+        public override string Help =>
+@"Greets the user who used the command.
 
-        public override void MessageReceived(object sender, DiscordMessageEventArgs e)
+Arguments:
+    Takes no arguments.";
+
+        public override void CommandCalled(string[] args, DiscordMember author, DiscordChannel channel, DiscordMessage message,
+            DiscordMessageType messageType)
         {
-            // Shortening the names of the event arguments, for more ease of use
-            var message = e.Message;
-            var channel = e.Channel;
+            if (args.Length != 0)
+                return;
 
-            // Checks if the messages content starts with the desired command name of our module 
-            if (message.Content.StartsWith(_commandName))
-            {
-                // Send "Hello World!" to the channel where the module recieved the message
-                channel.SendMessage("Hello World!");
-            }
+            // Send "Hello World!" to the channel where the module recieved the message
+            channel.SendMessage("Hello " + author.Username + "!");
         }
     }
 }

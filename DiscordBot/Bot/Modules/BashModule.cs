@@ -3,50 +3,42 @@ using System.IO;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Discord.Bot.BaseModules;
+using DiscordSharp;
 using DiscordSharp.Events;
 using DiscordSharp.Objects;
 
 namespace Discord.Bot.Modules
 {
-	public class BashModule : BaseMessageModule
+	public class BashModule : BaseCommandModule
     {
-		static readonly Regex _regex = new Regex(@"#!([^`]*)\n([^`]*)");
-	    const string _helpmessage = 
-            "Interpreters:\n" + 
-            "\tbash     Bourne-again shell\n" + 
-            "\tzsh      Z shell\n" + 
-            "\tpython   Python 2\n" + 
-            "\tpython3  Python 3\n" + 
-            "\truby     Ruby\n" + 
-            "\tnode     Nodejs (Javascript)\n" + 
-            "\tphp      PHP\n" + 
-            "\tperl     Perl\n" + 
-            "\tcsharp   C#\n" + 
-            "\tcling    C/C++\n";
+        public BashModule(DiscordBot bot) 
+            : base(bot)
+        { }
 
-	    public override void MessageReceived(object sender, DiscordMessageEventArgs e)
+        public override string CommandName => "bash";
+        public override string Help =>
+@"Can interpret the following code:
+    bash     Bourne-again shell 
+    zsh      Z shell
+    python   Python 2
+    python3  Python 3 
+    ruby     Ruby
+    node     Nodejs (Javascript) 
+    php      PHP
+    perl     Perl
+    csharp   C#
+    cling    C/C++
+
+Arguments:
+    2 arguments.
+    The first argument should be one of the things stated above.
+    The second argument should be the code to interpret";
+
+        public override void CommandCalled(string[] args, DiscordMember author, DiscordChannel channel, DiscordMessage message,
+            DiscordMessageType messageType)
         {
-            var channel = e.Channel;
-            var message = e.Message;
-
-            if (message.Content.StartsWith("#!help"))
-            {
-                channel.SendMessage(_helpmessage);
-                return;
-            }
-
-            var match = _regex.Match(message.Content);
-
-            if (!match.Success)
-                return;
-
-            Interpret(match.Groups[1].Value, match.Groups[2].Value, channel);
-        }
-
-        void Interpret(string interpreter, string str, DiscordChannel channel)
-		{
-			var filename = "/tmp/" + Guid.NewGuid().ToString();
-			File.WriteAllText(filename, "#!/usr/bin/env " + interpreter + "\n" + str);
+            var filename = $"/tmp/{Guid.NewGuid()}";
+            File.WriteAllText(filename, $"#!/usr/bin/env {args[0]}\n{args[1]}");
 
             var proc = new Process
             {
@@ -54,7 +46,7 @@ namespace Discord.Bot.Modules
                 {
                     WorkingDirectory = "/home/sandbox",
                     FileName = "/bin/bash",
-                    Arguments = "-c \"chmod +x " + filename + "; sudo -u sandbox " + filename + "\"",
+                    Arguments = $"-c \"chmod +x {filename}; sudo -u sandbox {filename}\"",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true
@@ -62,19 +54,19 @@ namespace Discord.Bot.Modules
             };
 
             //proc.StartInfo.RedirectStandardInput = true;
-			proc.OutputDataReceived += (s, e) => channel.SendMessage(e.Data);
-			proc.ErrorDataReceived += (s, e) => channel.SendMessage(e.Data);
-			/*bot.NewMessage += (DiscordBot _, Message msg) => { 
+            proc.OutputDataReceived += (s, e) => channel.SendMessage(e.Data);
+            proc.ErrorDataReceived += (s, e) => channel.SendMessage(e.Data);
+            /*bot.NewMessage += (DiscordBot _, Message msg) => { 
 				if (!proc.HasExited)
 					proc.StandardInput.Write(msg.Content);
 			};*/
 
-			proc.Start();
-			proc.BeginErrorReadLine();
-			proc.BeginOutputReadLine();
+            proc.Start();
+            proc.BeginErrorReadLine();
+            proc.BeginOutputReadLine();
 
-			//proc.WaitForExit(10000);
-		}
-	}
+            //proc.WaitForExit(10000);
+        }
+    }
 }
 

@@ -1,16 +1,20 @@
 ﻿using DiscordSharp;
 using Discord.Bot.Interfaces;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Discord.Bot.BaseModules;
 
 namespace Discord.Bot
 {
     public class DiscordBot
     {
-        readonly DiscordClient _client;
+        public List<BaseCommandModule> Commands { get; } = new List<BaseCommandModule>();
+        public DiscordClient Client { get; }
 
         public DiscordBot(string token)
         {
-            _client = new DiscordClient(token, true);
+            Client = new DiscordClient(token, true);
         }
 
         public void Start()
@@ -18,10 +22,10 @@ namespace Discord.Bot
             try
             {
                 Console.WriteLine("Sending login request...");
-                _client.SendLoginRequest();
+                Client.SendLoginRequest();
 
                 Console.WriteLine("Connecting client in separate thread...");
-                _client.Connect();
+                Client.Connect();
 
                 Console.WriteLine("Client connected!");
             }
@@ -31,58 +35,68 @@ namespace Discord.Bot
             }
         }
 
+        public void AddCommand(BaseCommandModule command)
+        {
+            // we need to make sure we don't have dublicate commands
+            if (Commands.Any(com => com.CommandName == command.CommandName))
+                throw new NotImplementedException();
+
+            Commands.Add(command);
+            AddModule(command);
+        }
+
         public void AddModule(IMessageModule module)
         {
-            _client.MentionReceived             += module.MentionReceived;
-            _client.MessageDeleted              += module.MessageDeleted;
-            _client.MessageEdited               += module.MessageEdited;
-            _client.MessageReceived             += module.MessageReceived;
-            _client.PrivateMessageDeleted       += module.PrivateMessageDeleted;
-            _client.PrivateMessageReceived      += module.PrivateMessageReceived;
-            _client.UnknownMessageTypeReceived  += module.UnknownMessageTypeReceived;
-            _client.URLMessageAutoUpdate        += module.UrlMessageAutoUpdate;
+            Client.MentionReceived             += module.MentionReceived;
+            Client.MessageDeleted              += module.MessageDeleted;
+            Client.MessageEdited               += module.MessageEdited;
+            Client.MessageReceived             += module.MessageReceived;
+            Client.PrivateMessageDeleted       += module.PrivateMessageDeleted;
+            Client.PrivateMessageReceived      += module.PrivateMessageReceived;
+            Client.UnknownMessageTypeReceived  += module.UnknownMessageTypeReceived;
+            Client.URLMessageAutoUpdate        += module.UrlMessageAutoUpdate;
         }
 
         public void AddModule(IImplementsEverything module)
         {
-            _client.AudioPacketReceived             += module.AudioPacketReceived;
-            _client.BanRemoved                      += module.BanRemoved;
-            _client.ChannelCreated                  += module.ChannelCreated;
-            _client.ChannelDeleted                  += module.ChannelDeleted;
-            _client.ChannelUpdated                  += module.ChannelUpdated;
-            _client.Connected                       += module.Connected;
-            _client.GuildAvailable                  += module.GuildAvailable;
-            _client.GuildCreated                    += module.GuildCreated;
-            _client.GuildDeleted                    += module.GuildDeleted;
-            _client.GuildMemberBanned               += module.GuildMemberBanned;
-            _client.GuildMemberUpdated              += module.GuildMemberUpdated;
-            _client.GuildUpdated                    += module.GuildUpdated;
-            _client.KeepAliveSent                   += module.KeepAliveSent;
-            _client.MentionReceived                 += module.MentionReceived;
-            _client.MessageDeleted                  += module.MessageDeleted;
-            _client.MessageEdited                   += module.MessageEdited;
-            _client.MessageReceived                 += module.MessageReceived;
-            _client.PresenceUpdated                 += module.PresenceUpdated;
-            _client.PrivateChannelCreated           += module.PrivateChannelCreated;
-            _client.PrivateChannelDeleted           += module.PrivateChannelDeleted;
-            _client.PrivateMessageDeleted           += module.PrivateMessageDeleted;
-            _client.PrivateMessageReceived          += module.PrivateMessageReceived;
-            _client.RoleDeleted                     += module.RoleDeleted;
-            _client.RoleUpdated                     += module.RoleUpdated;
-            _client.SocketClosed                    += module.SocketClosed;
-            _client.SocketOpened                    += module.SocketOpened;
-            _client.UnknownMessageTypeReceived      += module.UnknownMessageTypeReceived;
-            _client.URLMessageAutoUpdate            += module.UrlMessageAutoUpdate;
-            _client.UserAddedToServer               += module.UserAddedToServer;
-            _client.UserLeftVoiceChannel            += module.UserLeftVoiceChannel;
-            _client.UserRemovedFromServer           += module.UserRemovedFromServer;
-            _client.UserSpeaking                    += module.UserSpeaking;
-            _client.UserTypingStart                 += module.UserTypingStart;
-            _client.UserUpdate                      += module.UserUpdate;
-            _client.VoiceClientConnected            += module.VoiceClientConnected;
-            _client.VoiceClientDebugMessageReceived += module.VoiceClientDebugMessageReceived;
-            _client.VoiceQueueEmpty                 += module.VoiceQueueEmpty;
-            _client.VoiceStateUpdate                += module.VoiceStateUpdate;
+            Client.AudioPacketReceived             += module.AudioPacketReceived;
+            Client.BanRemoved                      += module.BanRemoved;
+            Client.ChannelCreated                  += module.ChannelCreated;
+            Client.ChannelDeleted                  += module.ChannelDeleted;
+            Client.ChannelUpdated                  += module.ChannelUpdated;
+            Client.Connected                       += module.Connected;
+            Client.GuildAvailable                  += module.GuildAvailable;
+            Client.GuildCreated                    += module.GuildCreated;
+            Client.GuildDeleted                    += module.GuildDeleted;
+            Client.GuildMemberBanned               += module.GuildMemberBanned;
+            Client.GuildMemberUpdated              += module.GuildMemberUpdated;
+            Client.GuildUpdated                    += module.GuildUpdated;
+            Client.KeepAliveSent                   += module.KeepAliveSent;
+            Client.MentionReceived                 += module.MentionReceived;
+            Client.MessageDeleted                  += module.MessageDeleted;
+            Client.MessageEdited                   += module.MessageEdited;
+            Client.MessageReceived                 += module.MessageReceived;
+            Client.PresenceUpdated                 += module.PresenceUpdated;
+            Client.PrivateChannelCreated           += module.PrivateChannelCreated;
+            Client.PrivateChannelDeleted           += module.PrivateChannelDeleted;
+            Client.PrivateMessageDeleted           += module.PrivateMessageDeleted;
+            Client.PrivateMessageReceived          += module.PrivateMessageReceived;
+            Client.RoleDeleted                     += module.RoleDeleted;
+            Client.RoleUpdated                     += module.RoleUpdated;
+            Client.SocketClosed                    += module.SocketClosed;
+            Client.SocketOpened                    += module.SocketOpened;
+            Client.UnknownMessageTypeReceived      += module.UnknownMessageTypeReceived;
+            Client.URLMessageAutoUpdate            += module.UrlMessageAutoUpdate;
+            Client.UserAddedToServer               += module.UserAddedToServer;
+            Client.UserLeftVoiceChannel            += module.UserLeftVoiceChannel;
+            Client.UserRemovedFromServer           += module.UserRemovedFromServer;
+            Client.UserSpeaking                    += module.UserSpeaking;
+            Client.UserTypingStart                 += module.UserTypingStart;
+            Client.UserUpdate                      += module.UserUpdate;
+            Client.VoiceClientConnected            += module.VoiceClientConnected;
+            Client.VoiceClientDebugMessageReceived += module.VoiceClientDebugMessageReceived;
+            Client.VoiceQueueEmpty                 += module.VoiceQueueEmpty;
+            Client.VoiceStateUpdate                += module.VoiceStateUpdate;
         }
     }
 }

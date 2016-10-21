@@ -13,127 +13,130 @@ using UnofficialAniListApiSharp.Client;
 
 namespace Discord.Bot.Modules
 {
-    public class AnimeGuessModule : BaseMessageModule
+    // TODO: rewrite this game
+    public class AnimeGuessModule : BaseCommandModule
     {
-        enum GameState { Idle, AwaitingPlayers, AwaitingAnime, Playing }
+        enum GameState
+        {
+            Idle,
+            AwaitingPlayers,
+            AwaitingAnime,
+            Playing
+        }
+        
+        private const string _host = "-host";
+        private const string _start = "-start";
+        private const string _join = "-join";
+        private const string _stop = "-stop";
+        private const string _pass = "-pass";
 
-        const string _commandName = "#guess ";
-        const string _help = "-help";
-        const string _host = "-host";
-        const string _start = "-start";
-        const string _join = "-join";
-        const string _stop = "-stop";
-        const string _pass = "-pass";
-
-        const string _helpStr =
-            "#guess \"command\"\n" +
-            "\t-help     Get help\n" +
-            "\t-host     Host a game\n" +
-            "\t-start    Start your hosted game\n" +
-            "\t-join     Join a hosted game\n" +
-            "\t-stop     Stop your hosted game\n" +
-            "\t-pass     Pass your guess\n";
-
-        const string _helpChooser =
+        private const string _helpChooser =
             "You have been chosen to pick an anime.\n" +
             "To choose an anime first just write the name to me.\n" +
             "Then, pick correct anime from the list i provide you.\n" +
-            "Example:\n" + 
-            "You:\n" + 
+            "Example:\n" +
+            "You:\n" +
             "Clannad\n\n" +
-            "Bot:\n" + 
+            "Bot:\n" +
             "---0---\n" +
             "Title: Clannad Movie\n\n" +
             "---1---\n" +
             "Title: Clannad\n\n" +
-            "You:\n" + 
+            "You:\n" +
             "1\n\n" +
-            "Bot:\n" + 
+            "Bot:\n" +
             "You have chosen Clannad";
 
-        const string _answer =
+        private const string _answer =
             "Answer:\n" +
             "\tTitle: {0}\n" +
             "\tEnglish Title: {1}\n";
 
-        const string _lost = 
+        private const string _lost =
             "No one guessed the anime.\n" +
             _answer;
 
-        const string _win =
+        private const string _win =
             "{2} guessed the anime.\n" +
             _answer + "\n\n" +
             "Current Scores:\n";
 
-        const string _suggest =
+        private const string _suggest =
             "---{0}---\n" +
             "Title: {1}\n" +
             "English Title: {2}\n\n";
 
-        const bool _hostCanGuess = false;
-        const uint _minPlayers = 0;
-        const uint _awaittime = 60;
-        const uint _maxScore = 5;
+        private const bool _hostCanGuess = false;
+        private const int _minPlayers = 0;
+        private const int _awaittime = 60;
+        private const int _maxScore = 5;
 
-        readonly Dictionary<DiscordMember, uint> _players = new Dictionary<DiscordMember, uint>();
-        readonly HashSet<DiscordMember> _haspassed = new HashSet<DiscordMember>();
-        readonly Random _randomizer = new Random();
-        readonly AnilistClient _client;
+        private readonly Dictionary<DiscordMember, int> _players = new Dictionary<DiscordMember, int>();
+        private readonly HashSet<DiscordMember> _haspassed = new HashSet<DiscordMember>();
+        private readonly Random _randomizer = new Random();
+        private readonly AnilistClient _client;
 
-        GameState _state = GameState.Idle;
-        bool _awaiting = true;
+        private GameState _state = GameState.Idle;
+        private bool _awaiting = true;
 
-        DiscordMember _choosingPlayer;
-        DiscordMember _hostingPlayer;
-        AnimeBig _chosenanime;
-        string _title;
-        string _engtitle;
+        private DiscordMember _choosingPlayer;
+        private DiscordMember _hostingPlayer;
+        private AnimeBig _chosenanime;
+        private string _title;
+        private string _engtitle;
 
-
-        public AnimeGuessModule(AnilistClient client)
+        public AnimeGuessModule(DiscordBot bot, AnilistClient client)
+            : base(bot)
         {
             _client = client;
         }
 
+        public override string CommandName => "guess";
+        public override string Help =>
+@"A anime guessing game.
+
+Arguments:
+    -host     Host a game.
+    -start    Start your hosted game.
+    -join     Join a hosted game.
+    -stop     Stop your hosted game.
+    -pass     Pass your guess.";
+
         public override void MessageReceived(object sender, DiscordMessageEventArgs e)
         {
-            var author = e.Author;
-            var channel = e.Channel;
-            var message = e.MessageText;
-
-            if (message.StartsWith(_commandName))
+            if (!TryCallCommand(e.MessageText, e.Author, e.Channel, e.Message, e.MessageType))
             {
-                var arg = e.MessageText.Remove(0, _commandName.Length).Trim(' ');
-
-                switch (arg)
-                {
-                    case _join:
-                        JoinGameCommand(channel, author);
-                        break;
-                    case _help:
-                        HelpCommand(channel);
-                        break;
-                    case _stop:
-                        StopGameCommand(channel, author);
-                        break;
-                    case _host:
-                        HostGameCommand(channel, author);
-                        break;
-                    case _start:
-                        StartGameCommand(author);
-                        break;
-                    case _pass:
-                        PassCommand(author, channel);
-                        break;
-                }
-            }
-            else
-            {
-                GuessAnime(channel, author, message);
+                GuessAnime(e.Channel, e.Author, e.MessageText);
             }
         }
 
-        void PassCommand(DiscordMember author, DiscordChannel channel)
+        public override void CommandCalled(string[] args, DiscordMember author, DiscordChannel channel, DiscordMessage message,
+            DiscordMessageType messageType)
+        {
+            if (args.Length != 1)
+                return;
+
+            switch (args[0])
+            {
+                case _join:
+                    JoinGameCommand(channel, author);
+                    break;
+                case _stop:
+                    StopGameCommand(channel, author);
+                    break;
+                case _host:
+                    HostGameCommand(channel, author);
+                    break;
+                case _start:
+                    StartGameCommand(author);
+                    break;
+                case _pass:
+                    PassCommand(author, channel);
+                    break;
+            }
+        }
+
+        private void PassCommand(DiscordMember author, DiscordChannel channel)
         {
             if (_haspassed.Contains(author))
                 return;
@@ -142,8 +145,8 @@ namespace Discord.Bot.Modules
 
             _haspassed.Add(author);
 
-            if (_players.All(item => item.Key == _choosingPlayer || 
-                             _haspassed.Contains(item.Key)))
+            if (_players.All(item => item.Key == _choosingPlayer ||
+                                     _haspassed.Contains(item.Key)))
             {
                 msg += "\n\n" + string.Format(_lost, _chosenanime.TitleRomaji, _chosenanime.TitleEnglish);
                 _awaiting = false;
@@ -152,16 +155,16 @@ namespace Discord.Bot.Modules
             channel.SendMessage(msg);
         }
 
-        void GuessAnime(DiscordChannel channel, DiscordMember author, string message)
+        private void GuessAnime(DiscordChannel channel, DiscordMember author, string message)
         {
             if (!_hostCanGuess)
             {
                 if (author == _choosingPlayer || !_players.ContainsKey(author))
                     return;
             }
-            
+
             // filter out big letters, space and special characters
-            var strippedmsg = string.Join("", 
+            var strippedmsg = string.Join("",
                 message.ToLower().Where(c => (c >= 'a' && c <= 'z') || char.IsDigit(c)));
 
             if ((string.IsNullOrEmpty(_title) || _title != strippedmsg) &&
@@ -178,13 +181,13 @@ namespace Discord.Bot.Modules
             _awaiting = false;
         }
 
-        void StartGameCommand(DiscordMember author)
+        private void StartGameCommand(DiscordMember author)
         {
             if (_state == GameState.AwaitingPlayers && author == _hostingPlayer)
                 _state = GameState.Playing;
         }
 
-        void HostGameCommand(DiscordChannel channel, DiscordMember author)
+        private void HostGameCommand(DiscordChannel channel, DiscordMember author)
         {
             if (_state != GameState.Idle)
                 return;
@@ -210,7 +213,7 @@ namespace Discord.Bot.Modules
             });
         }
 
-        void StopGameCommand(DiscordChannel channel, DiscordMember author)
+        private void StopGameCommand(DiscordChannel channel, DiscordMember author)
         {
             if (_state == GameState.Idle || author != _hostingPlayer)
                 return;
@@ -220,12 +223,7 @@ namespace Discord.Bot.Modules
             channel.SendMessage("Game was stopped by host.");
         }
 
-        void HelpCommand(DiscordChannel channel)
-        {
-            channel.SendMessage(_helpStr);
-        }
-
-        void JoinGameCommand(DiscordChannel channel, DiscordMember author)
+        private void JoinGameCommand(DiscordChannel channel, DiscordMember author)
         {
             if (_state == GameState.Idle || _players.ContainsKey(author))
                 return;
@@ -234,7 +232,7 @@ namespace Discord.Bot.Modules
             channel.SendMessage(author.Username + " joined the game!");
         }
 
-        Anime[] _tempEntries;
+        private Anime[] _tempEntries;
         public override void PrivateMessageReceived(object sender, DiscordPrivateMessageEventArgs e)
         {
             var member = e.Author;
@@ -242,6 +240,7 @@ namespace Discord.Bot.Modules
             // Only accept messages from the choosing player
             if (_state != GameState.AwaitingAnime || member != _choosingPlayer)
                 return;
+
             var message = e.Message.Trim(' ');
             int choice;
 
@@ -271,7 +270,7 @@ namespace Discord.Bot.Modules
             if (_tempEntries != null)
             {
                 var suggests = "";
-                
+
                 // Provide the chooser options of what anime he wants the others to guess
                 for (var i = 0; i < _tempEntries.Length; i++)
                 {
@@ -287,7 +286,7 @@ namespace Discord.Bot.Modules
             }
         }
 
-        void GameLoop(DiscordChannel channel)
+        private void GameLoop(DiscordChannel channel)
         {
             DiscordMember winner;
 
@@ -318,19 +317,19 @@ namespace Discord.Bot.Modules
                     GuessTimer(_awaittime, channel);
 
                     if (_awaiting)
-                        channel.SendMessage(string.Format(_lost, _chosenanime.TitleRomaji, _chosenanime.TitleEnglish, _chosenanime.Id));
+                        channel.SendMessage(string.Format(_lost, _chosenanime.TitleRomaji, _chosenanime.TitleEnglish));
                 }
                 else
                 {
                     channel.SendMessage("Anime wasn't chosen.");
                 }
             }
-            
+
             channel.SendMessage(winner.Username + " won the game!");
             _state = GameState.Idle;
         }
 
-        bool IsDone(out DiscordMember winner)
+        private bool IsDone(out DiscordMember winner)
         {
             winner = null;
 
@@ -346,11 +345,11 @@ namespace Discord.Bot.Modules
             return false;
         }
 
-        void AwaitAnime(uint seconds)
+        private void AwaitAnime(int seconds)
         {
             const int last = 5;
             var time = seconds;
-            var half = seconds / 2;
+            var half = seconds/2;
 
             _awaiting = true;
 
@@ -358,7 +357,7 @@ namespace Discord.Bot.Modules
             {
                 if (time == 0)
                     break;
-                
+
                 if (time == half)
                     _choosingPlayer.SendMessage(time + " seconds remaining!");
 
@@ -370,14 +369,14 @@ namespace Discord.Bot.Modules
             }
         }
 
-        void GuessTimer(uint seconds, DiscordChannel channel)
+        private void GuessTimer(int seconds, DiscordChannel channel)
         {
             const int last = 5;
             var time = seconds;
-            var secondHint = time - seconds / 6;
-            var thirdHint = time - seconds / 3;
-            var forthHint = seconds / 2;
-            var fifthHint = seconds / 4;
+            var secondHint = time - seconds/6;
+            var thirdHint = time - seconds/3;
+            var forthHint = seconds/2;
+            var fifthHint = seconds/4;
 
             _awaiting = true;
 
@@ -389,7 +388,7 @@ namespace Discord.Bot.Modules
                 if (time == secondHint)
                 {
                     channel.SendMessage($"{time} seconds remaining!\n" +
-                                        $"Genres: {string.Join(", ", _chosenanime.Genres.Select(g => g.ToString()))}\n" + 
+                                        $"Genres: {string.Join(", ", _chosenanime.Genres.Select(g => g.ToString()))}\n" +
                                         $"Episodes: {_chosenanime?.TotalEpisodes?.ToString() ?? "???"}\n" +
                                         $"Type: {_chosenanime.Type}\n");
                 }
@@ -400,7 +399,7 @@ namespace Discord.Bot.Modules
                                         $"Genres: {string.Join(", ", _chosenanime.Genres.Select(g => g.ToString()))}\n" +
                                         $"Episodes: {_chosenanime.TotalEpisodes?.ToString() ?? "???"}\n" +
                                         $"Type: {_chosenanime.Type}\n" +
-                                        $"Year: {_chosenanime.StartDate?.Remove(4) ?? "???" }");
+                                        $"Year: {_chosenanime.StartDate?.Remove(4) ?? "???"}");
                 }
 
                 if (time == forthHint)

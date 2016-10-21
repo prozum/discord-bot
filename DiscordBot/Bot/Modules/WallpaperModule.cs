@@ -3,31 +3,33 @@ using System.IO;
 using Discord.Bot.BaseModules;
 using DiscordSharp;
 using DiscordSharp.Events;
+using DiscordSharp.Objects;
 
 namespace Discord.Bot.Modules
 {
-    public class WallpaperModule : BaseMessageModule
+    public class WallpaperModule : BaseCommandModule
     {
-        const string _commandName = "#wallpaper";
-        readonly string _path;
-        readonly Random _random = new Random();
+        private readonly string _path;
+        private readonly Random _random = new Random();
         
-        public WallpaperModule(string path)
+        public WallpaperModule(DiscordBot bot, string path)
+            : base(bot)
         {
             _path = path;
         }
 
-        public override void MessageReceived(object sender, DiscordMessageEventArgs e)
-        {
-            var client = sender as DiscordClient;
-            var channel = e.Channel;
-            var message = e.MessageText;
+        public override string CommandName => "#wallpaper";
+        public override string Help =>
+@"Picks a random wallpaper from a folder the bot has acces to.
 
-            if (message.StartsWith(_commandName))
-            {
-                var files = Directory.GetFiles(_path);
-                client.AttachFile(channel, "", files[_random.Next(0, files.Length)]);
-            }
+Arguments:
+    Takes no arguments.";
+
+        public override void CommandCalled(string[] args, DiscordMember author, DiscordChannel channel, DiscordMessage message, 
+            DiscordMessageType messageType)
+        {
+            var files = Directory.GetFiles(_path);
+            Bot.Client.AttachFile(channel, "", files[_random.Next(0, files.Length)]);
         }
     }
 }

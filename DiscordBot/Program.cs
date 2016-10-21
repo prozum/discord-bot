@@ -1,6 +1,5 @@
 ﻿using Discord.Bot;
 using Discord.Bot.Modules;
-using MyAnimeListSharp.Auth;
 using System;
 using System.Configuration;
 using UnofficialAniListApiSharp.Client;
@@ -16,13 +15,13 @@ namespace Discord
                 ConfigurationManager.AppSettings.Get("AniListClientID"),
                 ConfigurationManager.AppSettings.Get("AniListClientSecret"));
 
-            bot.AddModule(new BrainFuckModule());
-            bot.AddModule(new CasNetModule());
-			bot.AddModule(new BashModule());
-            bot.AddModule(new TemplateModule());
-            bot.AddModule(new AnilistModule(client));
-            bot.AddModule(new AnimeGuessModule(client));
-            bot.AddModule(new WallpaperModule(ConfigurationManager.AppSettings.Get("WallpaperFolder")));
+            bot.AddModule(new TemplateModule(bot));
+            bot.AddModule(new BrainFuckModule(bot));
+            bot.AddModule(new CasNetModule(bot));
+            bot.AddModule(new BashModule(bot));
+            bot.AddModule(new AnilistModule(bot, client));
+            bot.AddModule(new AnimeGuessModule(bot, client));
+            bot.AddModule(new WallpaperModule(bot, ConfigurationManager.AppSettings.Get("WallpaperFolder")));
 
             bot.Start();
             while (Console.ReadLine() != "stop") { }

@@ -3,7 +3,7 @@ using System;
 
 namespace Discord.Bot.Interfaces
 {
-    public interface IImplementsEverything
+    public interface IImplementsEverything : IMessageModule
     {
         void VoiceStateUpdate(object sender, DiscordVoiceStateUpdateEventArgs e);
 
@@ -24,10 +24,6 @@ namespace Discord.Bot.Interfaces
         void UserLeftVoiceChannel(object sender, DiscordLeftVoiceChannelEventArgs e);
 
         void UserAddedToServer(object sender, DiscordSharp.Events.DiscordGuildMemberAddEventArgs e);
-
-        void UrlMessageAutoUpdate(object sender, DiscordURLUpdateEventArgs e);
-
-        void UnknownMessageTypeReceived(object sender, DiscordSharp.Events.UnknownMessageEventArgs e);
 
         void SocketOpened(object sender, EventArgs e);
 
@@ -63,22 +59,10 @@ namespace Discord.Bot.Interfaces
 
         void AudioPacketReceived(object sender, DiscordAudioPacketEventArgs e);
 
-        void PrivateMessageReceived(object sender, DiscordPrivateMessageEventArgs e);
-
-        void PrivateMessageDeleted(object sender, DiscordSharp.Events.DiscordPrivateMessageDeletedEventArgs e);
-
         void PrivateChannelDeleted(object sender, DiscordSharp.Events.DiscordPrivateChannelDeleteEventArgs e);
 
         void PrivateChannelCreated(object sender, DiscordPrivateChannelEventArgs e);
 
         void PresenceUpdated(object sender, DiscordPresenceUpdateEventArgs e);
-
-        void MessageReceived(object sender, DiscordSharp.Events.DiscordMessageEventArgs e);
-
-        void MessageEdited(object sender, DiscordSharp.Events.DiscordMessageEditedEventArgs e);
-
-        void MessageDeleted(object sender, DiscordSharp.Events.DiscordMessageDeletedEventArgs e);
-
-        void MentionReceived(object sender, DiscordSharp.Events.DiscordMessageEventArgs e);
     }
 }
