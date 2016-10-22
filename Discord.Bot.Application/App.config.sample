@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <appSettings>
+    <add key="BotToken" value=""/>
+    <add key="AniListClientID" value=""/>
+    <add key="AniListClientSecret" value=""/>
+    <add key="WallpaperFolder" value =""/>
+  </appSettings>
+</configuration>
