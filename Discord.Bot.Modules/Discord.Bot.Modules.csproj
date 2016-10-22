@@ -85,10 +85,6 @@
       <Project>{107821fc-4fcf-4dae-81cd-78c1e3656033}</Project>
       <Name>AESharp</Name>
     </ProjectReference>
-    <ProjectReference Include="..\anilist-api\UnofficialAniListApiSharp\UnofficialAniListApiSharp.csproj">
-      <Project>{1514f43d-6496-4e3a-b3b0-3a226c8afef0}</Project>
-      <Name>UnofficialAniListApiSharp</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Discord.Bot\Discord.Bot.csproj">
       <Project>{821f8131-bb38-4900-b72b-973708da8780}</Project>
       <Name>Discord.Bot</Name>

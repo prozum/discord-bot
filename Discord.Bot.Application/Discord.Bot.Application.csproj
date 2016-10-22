@@ -52,10 +52,6 @@
     <None Include="App.config.sample" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\anilist-api\UnofficialAniListApiSharp\UnofficialAniListApiSharp.csproj">
-      <Project>{1514F43D-6496-4E3A-B3B0-3A226C8AFEF0}</Project>
-      <Name>UnofficialAniListApiSharp</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Discord.Bot\Discord.Bot.csproj">
       <Project>{821F8131-BB38-4900-B72B-973708DA8780}</Project>
       <Name>Discord.Bot</Name>

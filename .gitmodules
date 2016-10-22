@@ -1,6 +1,3 @@
 [submodule "ae-sharp"]
 	path = ae-sharp
 	url = https://github.com/prozum/ae-sharp.git
-[submodule "anilist-api"]
-	path = anilist-api
-	url = https://github.com/Hejsil/Unofficial-AniList-Api-Sharp.git
