@@ -1,31 +1,29 @@
-﻿using Discord.Bot;
-using Discord.Bot.Modules;
-using System;
+﻿using System;
 using System.Configuration;
+using Discord.Bot.Modules;
 using UnofficialAniListApiSharp.Client;
 
-namespace Discord
+namespace Discord.Bot.Application
 {
-    public class Program
+    class Program
     {
         static void Main(string[] args)
         {
-            var bot = new DiscordBot(ConfigurationManager.AppSettings.Get("BotToken"));
+            var bot = new DiscordBot("#");
             var client = new AnilistClient(
                 ConfigurationManager.AppSettings.Get("AniListClientID"),
                 ConfigurationManager.AppSettings.Get("AniListClientSecret"));
 
-            bot.AddModule(new TemplateModule(bot));
-            bot.AddModule(new BrainFuckModule(bot));
-            bot.AddModule(new CasNetModule(bot));
-            bot.AddModule(new BashModule(bot));
-            bot.AddModule(new AnilistModule(bot, client));
-            bot.AddModule(new AnimeGuessModule(bot, client));
-            bot.AddModule(new WallpaperModule(bot, ConfigurationManager.AppSettings.Get("WallpaperFolder")));
+            bot.AddCommand(new HelpCommand(bot));
+            bot.AddCommand(new TemplateCommand());
+            bot.AddCommand(new BrainFuckCommand());
+            bot.AddCommand(new CasNetCommand());
+            bot.AddCommand(new BashCommand());
+            bot.AddCommand(new AnilistCommand(client));
+            bot.AddCommand(new WallpaperCommand(ConfigurationManager.AppSettings.Get("WallpaperFolder")));
+            bot.AddCommand(new AnimeGuessCommand(client));
 
-            bot.Start();
-            while (Console.ReadLine() != "stop") { }
-
+            bot.Start(ConfigurationManager.AppSettings.Get("BotToken"));
             Environment.Exit(0);
         }
     }
