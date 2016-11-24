@@ -60,6 +60,10 @@
       <Project>{5DB483AA-7965-4F6E-B965-CB2111016672}</Project>
       <Name>Discord.Bot.Modules</Name>
     </ProjectReference>
+    <ProjectReference Include="..\UnofficialAniListApiSharp\UnofficialAniListApiSharp\UnofficialAniListApiSharp.csproj">
+      <Project>{B5BBB530-FAFD-4D56-B5CC-DFB586627F02}</Project>
+      <Name>UnofficialAniListApiSharp</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

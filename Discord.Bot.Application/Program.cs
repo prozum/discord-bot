@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Configuration;
 using Discord.Bot.Modules;
-//using UnofficialAniListApiSharp.Client;
+using UnofficialAniListApiSharp.Client;
 
 namespace Discord.Bot.Application
 {
@@ -10,14 +10,15 @@ namespace Discord.Bot.Application
         static void Main(string[] args)
         {
             var bot = new DiscordBot("#");
-            //var client = new AnilistClient(
-            //    ConfigurationManager.AppSettings.Get("AniListClientID"),
-            //    ConfigurationManager.AppSettings.Get("AniListClientSecret"));
-            //bot.AddCommand(new AnilistCommand(client));
-            //bot.AddCommand(new AnimeGuessCommand(client));
+
+            var client = new AnilistClient(
+                ConfigurationManager.AppSettings.Get("AniListClientID"),
+                ConfigurationManager.AppSettings.Get("AniListClientSecret"));
+            bot.AddCommand(new AnilistCommand(client));
+            bot.AddCommand(new AnimeGuessCommand(client));
 
             bot.AddCommand(new HelpCommand(bot));
-            bot.AddCommand(new TemplateCommand());
+            bot.AddCommand(new HelloCommand());
             bot.AddCommand(new BrainFuckCommand());
             bot.AddCommand(new CasNetCommand());
             bot.AddCommand(new BashCommand());

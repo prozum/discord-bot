@@ -2,7 +2,7 @@
 
 namespace Discord.Bot.Modules
 {
-    public class TemplateCommand : IDiscordBotCommand
+    public class HelloCommand : IDiscordBotCommand
     {
         public int? ArgumentCount => 0;
         public string CommandName => "hello";

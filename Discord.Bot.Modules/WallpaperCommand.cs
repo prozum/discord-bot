@@ -17,7 +17,7 @@ namespace Discord.Bot.Modules
         public int? ArgumentCount => 0;
         public string CommandName => "wallpaper";
         public string Help =>
-@"Picks a random wallpaper from a folder the bot has acces to.
+@"Picks a random wallpaper from a folder the bot has access to.
 
 Arguments:
     Takes no arguments.";

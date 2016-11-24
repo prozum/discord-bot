@@ -1,4 +1,5 @@
-﻿using AESharp;
+﻿using System.Collections.Generic;
+using AESharp;
 
 namespace Discord.Bot.Modules.AESharpExtensions
 {
@@ -6,7 +7,7 @@ namespace Discord.Bot.Modules.AESharpExtensions
     {
         public Channel Channel { get; set; }
 
-        protected DiscordSysFunc(string name, Scope scope, Channel channel) 
+        protected DiscordSysFunc(string name, Scope scope, Channel channel)
             : base(name, scope)
         {
             Channel = channel;

@@ -66,7 +66,6 @@ Arguments:
 
                 // increment instruction mp
                 ip++;
-
             }
 
             if (output != "")

@@ -5,8 +5,10 @@ namespace Discord.Bot.Modules.AESharpExtensions
 {
     public class SendMsgFunc : DiscordSysFunc
     {
+        public const string Name = "sendmsg";
+
         public SendMsgFunc(Scope scope, Channel channel) 
-            : base("sendmsg", scope, channel)
+            : base(Name, scope, channel)
         {
             ValidArguments = new List<ArgumentType>
             {

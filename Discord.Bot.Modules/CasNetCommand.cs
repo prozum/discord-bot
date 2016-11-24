@@ -16,7 +16,7 @@ namespace Discord.Bot.Modules
 Arguments:
     Takes 1 or more arguments.
     All has to be valid Æ# code.
-    Arguments will be interpreted in the order they where typed";
+    Arguments will be interpreted in the order they where typed.";
 
         public void Execute(string[] args, Server server, Channel channel, User user, Message message)
         {
@@ -25,7 +25,7 @@ Arguments:
 
             var scope = new Scope(_evaluator);
             _evaluator.SetVar("discord", scope);
-            scope.SetVar("sendmsg", new SendMsgFunc(scope, channel));
+            scope.SetVar(SendMsgFunc.Name, new SendMsgFunc(scope, channel));
 
             foreach (var arg in args)
             {
@@ -38,7 +38,6 @@ Arguments:
                     break;
                 }
             }
-
         }
     }
 }
