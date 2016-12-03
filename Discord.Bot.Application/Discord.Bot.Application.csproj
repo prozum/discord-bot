@@ -33,6 +33,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="RestSharp, Version=105.2.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RestSharp.105.2.3\lib\net452\RestSharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -50,6 +58,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="App.config.sample" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Discord.Bot\Discord.Bot.csproj">
@@ -59,10 +68,6 @@
     <ProjectReference Include="..\Discord.Bot.Modules\Discord.Bot.Modules.csproj">
       <Project>{5DB483AA-7965-4F6E-B965-CB2111016672}</Project>
       <Name>Discord.Bot.Modules</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\UnofficialAniListApiSharp\UnofficialAniListApiSharp\UnofficialAniListApiSharp.csproj">
-      <Project>{B5BBB530-FAFD-4D56-B5CC-DFB586627F02}</Project>
-      <Name>UnofficialAniListApiSharp</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

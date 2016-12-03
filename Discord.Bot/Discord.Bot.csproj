@@ -92,7 +92,6 @@
     <Compile Include="Interfaces\IUserLeftModule.cs" />
     <Compile Include="Interfaces\IUserUnbannedModule.cs" />
     <Compile Include="Interfaces\IUserUpdatedModule.cs" />
-    <Compile Include="Other\DiscordArgumentParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -7,9 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Discord.API.Client;
 using Discord.Bot.Interfaces;
-using UnofficialAniListApiSharp.Api;
-using UnofficialAniListApiSharp.Api.Data;
-using UnofficialAniListApiSharp.Client;
 
 namespace Discord.Bot.Modules
 {
@@ -25,7 +22,7 @@ namespace Discord.Bot.Modules
             }
             
             private readonly Random _randomizer = new Random();
-            private readonly AnilistClient _client;
+            //private readonly AnilistClient _client;
 
             private const bool _chooserCanGuess = false;
             private const int _minPlayers = 0;
@@ -37,7 +34,7 @@ namespace Discord.Bot.Modules
             private string _shortEngTitle;
             
             public Dictionary<User, PlayerData> Players { get; } = new Dictionary<User, PlayerData>();
-            public AnimeBig ChosenAnime { get; private set; }
+            //public AnimeBig ChosenAnime { get; private set; }
             public User Host { get; }
             public User Chooser { get; private set; }
             public GameState State { get; private set; } = GameState.AwaitingPlayers;
@@ -49,10 +46,10 @@ namespace Discord.Bot.Modules
                 Playing
             }
 
-            public AnimeGuessGame(User host, AnilistClient client)
+            public AnimeGuessGame(User host)
             {
                 Host = host;
-                _client = client;
+                //_client = client;
 
                 Players.Add(host, new PlayerData());
             }
@@ -165,11 +162,11 @@ namespace Discord.Bot.Modules
             "English Title: {2}\n\n";
 
         private readonly Dictionary<ulong, AnimeGuessGame> _games = new Dictionary<ulong, AnimeGuessGame>();
-        private readonly AnilistClient _client;
+        //private readonly AnilistClient _client;
 
-        public AnimeGuessCommand(AnilistClient client)
+        public AnimeGuessCommand(/*AnilistClient client*/)
         {
-            _client = client;
+            //_client = client;
         }
 
         public int? ArgumentCount => 1;
@@ -224,8 +221,8 @@ Arguments:
                     var stringBuilder = new StringBuilder($"{user.NicknameMention} passes this turn, and can't guess anymore.");
                     stringBuilder.Append("No one guessed the anime.\n");
                     stringBuilder.Append("Answer:\n");
-                    stringBuilder.Append($"\tTitle: {game.ChosenAnime.TitleRomaji}\n");
-                    stringBuilder.Append($"\tEnglish Title: {game.ChosenAnime.TitleEnglish}\n");
+                    //stringBuilder.Append($"\tTitle: {game.ChosenAnime.TitleRomaji}\n");
+                    //stringBuilder.Append($"\tEnglish Title: {game.ChosenAnime.TitleEnglish}\n");
 
                     channel.SendMessage(stringBuilder.ToString());
                     break;
@@ -244,8 +241,8 @@ Arguments:
             {
                 var message = new StringBuilder($"{user.NicknameMention} guessed the anime.\n");
                 message.Append("Answer:\n");
-                message.Append($"\tTitle: {game.ChosenAnime.TitleRomaji}\n");
-                message.Append($"\tEnglish Title: {game.ChosenAnime.TitleRomaji}\n\n\n");
+                //message.Append($"\tTitle: {game.ChosenAnime.TitleRomaji}\n");
+                //message.Append($"\tEnglish Title: {game.ChosenAnime.TitleRomaji}\n\n\n");
 
                 message.Append("Current Scores:\n");
 
@@ -273,8 +270,8 @@ Arguments:
                 return;
             }
 
-            var game = new AnimeGuessGame(user, _client);
-            _games.Add(channel.Id, game);
+            //var game = new AnimeGuessGame(user, _client);
+            //_games.Add(channel.Id, game);
 
             // TODO: more host logic
         }
