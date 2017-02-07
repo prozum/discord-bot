@@ -6,3 +6,10 @@ obj/
 
 *.userprefs
 *.suo
+/Discord.Bot.Application/Properties
+/Discord.Bot.Application/Properties/Resources.resx
+/Discord.Bot.Application/Properties/Resources.Designer.cs
+/Discord.Bot.Application/Properties/Resources.resx
+/Discord.Bot.Application/Properties/Resources.Designer.cs
+/Discord.Bot.Application/Properties/Resources.resx
+/Discord.Bot.Application/Properties/Resources.Designer.cs
