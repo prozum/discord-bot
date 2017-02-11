@@ -1,15 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26206.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AESharp", "ae-sharp\AESharp\AESharp.csproj", "{107821FC-4FCF-4DAE-81CD-78C1E3656033}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Bot", "Discord.Bot\Discord.Bot.csproj", "{821F8131-BB38-4900-B72B-973708DA8780}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JJerkBot", "JJerkBot\JJerkBot.csproj", "{821F8131-BB38-4900-B72B-973708DA8780}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Bot.Application", "Discord.Bot.Application\Discord.Bot.Application.csproj", "{6D2CAD83-8226-491A-BB4A-74796BA96C0C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JJerkBot.Application", "JJerkBot.Application\JJerkBot.Application.csproj", "{6D2CAD83-8226-491A-BB4A-74796BA96C0C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Bot.Modules", "Discord.Bot.Modules\Discord.Bot.Modules.csproj", "{5DB483AA-7965-4F6E-B965-CB2111016672}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JJerkBot.Modules", "JJerkBot.Modules\JJerkBot.Modules.csproj", "{5DB483AA-7965-4F6E-B965-CB2111016672}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
