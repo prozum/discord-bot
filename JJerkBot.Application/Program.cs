@@ -24,7 +24,8 @@ namespace JJerkBot.Application
             }
 
             // Rest of the commands, that do not have an empty constructor
-            //bot.AddCommand(new WallpaperCommand(Resources.WallpaperFolder));
+            bot.AddCommand(new WallpaperCommand(Resources.WallAlphacodersKey));
+            bot.AddCommand(new AnimeCommand(Resources.AnilistId, Resources.AnilistSecret));
 
             bot.Start(Properties.Resources.BotToken);
             Environment.Exit(0);

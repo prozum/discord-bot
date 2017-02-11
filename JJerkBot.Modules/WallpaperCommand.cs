@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using AESharp.Types;
 using Discord;
 using Discord.Commands;
 using Newtonsoft.Json;
@@ -15,6 +14,12 @@ namespace JJerkBot.Modules
     {
         private readonly RestClient _client = new RestClient("https://wall.alphacoders.com/api2.0/get.php");
         private readonly Random _random = new Random();
+        private readonly string _auth;
+
+        public WallpaperCommand(string auth)
+        {
+            _auth = auth;
+        }
 
         public string Name => "wallpaper";
         public string Description => "Picks a random wallpaper from a folder the bot has access to";
@@ -34,7 +39,7 @@ namespace JJerkBot.Modules
                 return;
 
             var request = new RestRequest();
-            request.AddParameter("auth", "");
+            request.AddParameter("auth", _auth);
             request.AddParameter("method", "search");
             request.AddParameter("term", term);
 
