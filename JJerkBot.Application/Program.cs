@@ -21,13 +21,14 @@ namespace JJerkBot.Application
                     if (iCommand.IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract && t.GetConstructor(Type.EmptyTypes) != null)
                         bot.AddCommand(Activator.CreateInstance(t) as ICommand);
                 }
+
             }
 
             // Rest of the commands, that do not have an empty constructor
             bot.AddCommand(new WallpaperCommand(Resources.WallAlphacodersKey));
             bot.AddCommand(new AnimeCommand(Resources.AnilistId, Resources.AnilistSecret));
 
-            bot.Start(Properties.Resources.BotToken);
+            bot.Start(Resources.BotToken);
             Environment.Exit(0);
         }
     }
