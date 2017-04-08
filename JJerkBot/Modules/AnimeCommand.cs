@@ -59,7 +59,7 @@ namespace JJerkBot.Modules
                     $"Finished Airing: {anime.EndDateFuzzy}\n" +
                     $"Genres: {string.Join(", ", anime.Genres)}\n" +
                     $"Score: {anime.AverageScore}\n" +
-                    $"Url: https://anilist.co/anime/{anime.Id}");
+                    $"Url: https://anilist.co/anime/{anime.Id}\n");
 
                 const int lastMessageIndex = 1999;
                 if (animeMessage.Length > lastMessageIndex)
@@ -69,14 +69,10 @@ namespace JJerkBot.Modules
                     animeMessage.Append("...");
                 }
 
-                Debug.Assert(animeMessage.Length <= 1999);
+                Debug.Assert(animeMessage.Length <= 2000);
 
                 await args.Channel.SendMessage(animeMessage.ToString());
             }
-        }
-
-        public void Execute(string[] args, Server server, Channel channel, User user, Message message)
-        {
         }
     }
 }

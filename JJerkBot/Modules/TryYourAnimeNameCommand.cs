@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using System.Globalization;
+using System.Diagnostics;
 
 namespace JJerkBot.Modules
 {
@@ -48,7 +50,7 @@ namespace JJerkBot.Modules
                     if (builder.Length + translated.Length <= 2000)
                     {
                         if (!char.IsLower(chr))
-                            translated = char.ToUpper(translated[0]) + translated.Substring(1);
+                            translated = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(translated);
 
                         builder.Append(translated);
 
@@ -61,6 +63,8 @@ namespace JJerkBot.Modules
                 else
                     break;
             }
+
+            Debug.Assert(builder.Length <= 2000);
 
             await args.Channel.SendMessage(builder.ToString());
         }
