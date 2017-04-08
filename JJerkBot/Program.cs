@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
-using JJerkBot.Application.Properties;
 using JJerkBot.Modules;
+using JJerkBot.Properties;
 
 namespace JJerkBot.Application
 {
@@ -10,9 +10,7 @@ namespace JJerkBot.Application
         static void Main(string[] args)
         {
             var bot = new Bot('#');
-
-            // TODO: We should probably have a more robust way of doing this, but for development, this is fine
-            var keepJJerkBotModuleFromNotBeingCompiles = typeof(HelloCommand);
+            
             var iCommand = typeof(ICommand);
             foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
             {

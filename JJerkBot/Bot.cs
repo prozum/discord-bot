@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using Discord;
 using Discord.Commands;
-using Discord.Logging;
 
 namespace JJerkBot
 {
@@ -36,7 +35,7 @@ namespace JJerkBot
             }
             catch (Exception e)
             {
-                Console.WriteLine("Something went wrong!\n" + e.Message + "\nPress any key to close this window.");
+                Console.WriteLine("Something went wrong!\n" + e.Message);
             }
         }
 
