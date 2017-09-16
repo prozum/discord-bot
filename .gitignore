@@ -3,6 +3,7 @@ DiscordBot/App.config
 packages/
 bin/
 obj/
+.vs/
 
 *.userprefs
 *.suo

@@ -24,8 +24,13 @@ namespace JJerkBot.Modules
 
         public async Task Do(CommandEventArgs args)
         {
-            // TODO: Handle code block ´´´ code ´´´
-            _evaluator.Parse(args.GetArg("code"));
+            var code = args.GetArg("code");
+            if (code.StartsWith("```") && code.EndsWith("```"))
+                code = code.Substring(3, code.Length - 6);
+            else if (code.StartsWith("`") && code.EndsWith("`"))
+                code = code.Substring(1, code.Length - 2);
+            
+            _evaluator.Parse(code);
             var res = _evaluator.Evaluate();
 
             var output = new StringBuilder();
